@@ -2,11 +2,11 @@ import path from 'path';
 import fs from 'fs';
 import Stripe from 'stripe';
 import dotenv from 'dotenv';
-import { SRMConfig, ProductConfig, PriceConfig } from './types';
+import { SRMConfig } from './types';
 
 // Load environment variables from .env file
 
-export async function deploy(configPath: string = 'srm.config.ts', envFilePath: string = '.env') {
+export async function deploy(configPath: string = 'srm.config.ts', envFilePath: string = '.env'): Promise<void> {
   console.log('Starting deployment process...');
   
   // Check if the .env file exists before loading
@@ -18,28 +18,24 @@ export async function deploy(configPath: string = 'srm.config.ts', envFilePath: 
     console.warn('Proceeding without loading environment variables.');
   }
 
-  console.log('Resolved configuration path:', configPath);
+  // Resolve the config path relative to the current working directory
+  const resolvedConfigPath = path.resolve(process.cwd(), configPath);
 
-  if (!fs.existsSync(configPath)) {
-    console.error('Configuration file not found.');
-    process.exit(1);
+  if (!fs.existsSync(resolvedConfigPath)) {
+    throw new Error(`Configuration file not found: ${resolvedConfigPath}`);
   }
-  console.log('Configuration file found.');
 
-  // Import the configuration
-  const config: SRMConfig = require(configPath).default;
-  console.log('Configuration imported:', config);
+  // Import the configuration using the resolved path
+  const config: SRMConfig = require(resolvedConfigPath).default;
 
   // Initialize Stripe with your secret key
   const stripeSecretKey = process.env.STRIPE_SECRET_KEY;
 
   if (!stripeSecretKey) {
-    console.error('Stripe secret key not found. Set STRIPE_SECRET_KEY in your environment variables or .env file.');
-    process.exit(1);
+    throw new Error('Stripe secret key not found. Set STRIPE_SECRET_KEY in your environment variables or .env file.');
   }
 
   const stripe = new Stripe(stripeSecretKey, { apiVersion: '2024-06-20' });
-  console.log('Stripe client initialized.');
 
   console.log('Deploying configuration to Stripe...');
 
@@ -49,7 +45,7 @@ export async function deploy(configPath: string = 'srm.config.ts', envFilePath: 
   console.log('Configuration deployed successfully.');
 }
 
-async function syncProductsAndPrices(stripe: Stripe, config: SRMConfig) {
+async function syncProductsAndPrices(stripe: Stripe, config: SRMConfig): Promise<void> {
   console.log('Synchronizing products and prices...');
   
   const { products } = config;
@@ -93,7 +89,7 @@ async function syncProductsAndPrices(stripe: Stripe, config: SRMConfig) {
   console.log('All products synchronized.');
 }
 
-async function syncPrices(stripe: Stripe, product: Stripe.Product, pricesConfig: { [key: string]: PriceConfig }) {
+async function syncPrices(stripe: Stripe, product: Stripe.Product, pricesConfig: { [key: string]: { amount: number; interval: string } }): Promise<void> {
   console.log(`Synchronizing prices for product: ${product.name}`);
   
   for (const priceKey in pricesConfig) {
@@ -127,7 +123,7 @@ async function syncPrices(stripe: Stripe, product: Stripe.Product, pricesConfig:
         unit_amount: priceConfig.amount,
         currency: 'usd', // Adjust the currency as needed
         recurring: {
-          interval: priceConfig.interval,
+          interval: priceConfig.interval as Stripe.Price.Recurring.Interval,
         },
         metadata: {
           srm_price_key: priceKey,
@@ -140,5 +136,3 @@ async function syncPrices(stripe: Stripe, product: Stripe.Product, pricesConfig:
   }
   console.log(`All prices synchronized for product: ${product.name}`);
 }
-
-deploy();

@@ -12,7 +12,6 @@ export interface SRMProduct {
 export interface SRMPrice {
   amount: number;
   interval: 'day' | 'week' | 'month' | 'year';
-  createSubscriptionCheckoutUrl: (params: { userId: string }) => Promise<string>;
 }
 
 export interface PriceConfig {

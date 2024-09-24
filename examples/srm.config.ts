@@ -1,23 +1,41 @@
-import { SRMConfig, SRMProductConfig } from '../src/types';
 import { createSubscriptionCheckoutUrl } from '../src/create-checkout';
 
-const defineConfig = (config: SRMConfig) => {
+// Helper function to get typed entries
+function typedEntries<V>(obj: { [key: string]: V }): [string, V][] {
+  return Object.entries(obj) as [string, V][];
+}
+
+// Define enhanced types
+interface EnhancedSRMPrice extends SRMPrice {
+  createSubscriptionCheckoutUrl: (params: { userId: string }) => Promise<string>;
+}
+
+interface EnhancedSRMProduct extends SRMProduct {
+  prices: { [key: string]: EnhancedSRMPrice };
+}
+
+interface EnhancedSRMConfig {
+  products: { [key: string]: EnhancedSRMProduct };
+  features: { [key: string]: string };
+}
+
+const defineConfig = (config: SRMConfig): EnhancedSRMConfig => {
   // Enhance products with methods
   const enhancedProducts = Object.fromEntries(
-    Object.entries(config.products).map(([productKey, product]) => {
+    typedEntries(config.products).map(([productKey, product]) => {
       const enhancedPrices = Object.fromEntries(
-        Object.entries(product.prices).map(([priceKey, price]) => [
+        typedEntries(product.prices).map(([priceKey, price]) => [
           priceKey,
           {
             ...price,
-            createSubscriptionCheckoutUrl: (params: { userId: string }) => {
-              return createSubscriptionCheckoutUrl({
+            createSubscriptionCheckoutUrl: async (params: { userId: string }) => {
+              return await createSubscriptionCheckoutUrl({
                 userId: params.userId,
                 productKey,
                 priceKey,
               });
             },
-          },
+          } as EnhancedSRMPrice,
         ])
       );
 
@@ -26,7 +44,7 @@ const defineConfig = (config: SRMConfig) => {
         {
           ...product,
           prices: enhancedPrices,
-        },
+        } as EnhancedSRMProduct,
       ];
     })
   );
@@ -37,7 +55,7 @@ const defineConfig = (config: SRMConfig) => {
   };
 };
 
-export default defineConfig({
+const config: SRMConfig = {
   features: {
     basicAnalytics: 'Basic Analytics',
     aiReporting: 'AI Reporting',
@@ -64,4 +82,23 @@ export default defineConfig({
       features: ['basicAnalytics', 'aiReporting'],
     },
   },
-});
+};
+
+export default defineConfig(config);
+
+// Types
+export interface SRMConfig {
+  products: { [key: string]: SRMProduct };
+  features: { [key: string]: string };
+}
+
+export interface SRMProduct {
+  name: string;
+  prices: { [key: string]: SRMPrice };
+  features: string[];
+}
+
+export interface SRMPrice {
+  amount: number;
+  interval: 'day' | 'week' | 'month' | 'year';
+}

@@ -9,12 +9,13 @@
   "scripts": {
     "build": "tsc",
     "start": "ts-node bin/srm.ts",
-    "deploy:example": "ts-node bin/srm.ts deploy examples/srm.config.ts examples/.env"
+    "deploy:example": "ts-node bin/srm.ts deploy --config examples/srm.config.ts --env examples/.env"
   },
   "dependencies": {
     "dotenv": "^16.4.5",
     "stripe": "^16.12.0",
-    "ts-node": "^10.9.2"
+    "ts-node": "^10.9.2",
+    "tsx": "^4.18.0"
   },
   "devDependencies": {
     "@types/node": "^20.16.5",
