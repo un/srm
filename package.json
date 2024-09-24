@@ -1,0 +1,26 @@
+{
+  "name": "srm",
+  "version": "1.0.0",
+  "description": "Subscription Resource Manager CLI Tool",
+  "main": "dist/deploy.js",
+  "bin": {
+    "srm": "bin/srm.ts"
+  },
+  "scripts": {
+    "build": "tsc",
+    "start": "ts-node bin/srm.ts",
+    "deploy:example": "ts-node bin/srm.ts deploy examples/srm.config.ts examples/.env"
+  },
+  "dependencies": {
+    "dotenv": "^16.4.5",
+    "stripe": "^16.12.0",
+    "ts-node": "^10.9.2"
+  },
+  "devDependencies": {
+    "@types/node": "^20.16.5",
+    "typescript": "^5.6.2"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC"
+}
