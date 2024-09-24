@@ -1,3 +1,5 @@
+⚠️ very experimental not recommended for prod.
+
 # SRM (Stripe Resource Manager)
 
 SRM is a streamlined Stripe Resource Manager designed to simplify the management of subscription products and pricing plans. It allows you to define your products and their pricing configurations in a TypeScript configuration file, deploy them to Stripe, and generate checkout URLs for seamless subscription management.
@@ -115,30 +117,9 @@ Before getting started, ensure you have the following installed:
    - **Products**: Define your subscription products, their pricing plans, and associated features.
    - **Stripe Integration**: Initialize Stripe with your secret key.
 
-## Usage
 
-### Deploying Configuration to Stripe
 
-To synchronize your local configuration with Stripe, use the deployment script.
-
-1. **Deploy Using Default Configuration**
-
-   ```bash
-   node ./src/srm.js deploy
-   ```
-
-2. **Deploy Using Custom Configuration and Environment Files**
-
-   ```bash
-   node ./src/srm.js deploy --config ./examples/srm.config.ts --env ./examples/.env
-   ```
-
-   - `--config`: Path to your SRM configuration file.
-   - `--env`: Path to your environment variables file.
-
-   **Note**: Ensure that your `.env` file contains the `STRIPE_SECRET_KEY`.
-
-3. **Deployment Process**
+2. **Deployment Process**
 
    - **Products Synchronization**: Creates or updates products in Stripe based on your configuration.
    - **Prices Synchronization**: Creates or updates pricing plans for each product.
@@ -196,19 +177,6 @@ srm/
 └── README.md
 ```
 
-## Scripts
-
-- **Deploy Configuration**
-
-  ```bash
-  node ./src/srm.js deploy --config [path-to-config] --env [path-to-env]
-  ```
-
-- **Create Checkout URL**
-
-  ```bash
-  ts-node ./examples/createCheckout.ts
-  ```
 
 ## Contributing
 
