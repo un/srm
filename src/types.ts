@@ -1,6 +1,13 @@
 export interface SRMConfig {
-  products: { [key: string]: SRMProduct };
-  features: { [key: string]: string };
+  features: Record<string, string>;
+  products: Record<string, {
+    name: string;
+    prices: Record<string, {
+      amount: number;
+      interval: 'month' | 'year';
+    }>;
+    features: string[];
+  }>;
 }
 
 export interface SRMProduct {

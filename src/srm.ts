@@ -3,7 +3,7 @@
 import path from 'path';
 import fs from 'fs';
 import * as tsNode from 'ts-node';
-import { deploy } from '../src/deploy';
+import { deploy } from './deploy';
 
 // Register ts-node to handle TypeScript files
 tsNode.register({

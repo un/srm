@@ -9,7 +9,7 @@
   "scripts": {
     "build": "tsc",
     "example:checkout": "ts-node examples/createCheckout.ts",
-    "example:deploy": "ts-node src/srm.ts deploy --config examples/srm.config.ts --env examples/.env"
+    "example:deploy": "ts-node src/srm.ts deploy --config examples/srm.config.ts"
   },
   "dependencies": {
     "dotenv": "^16.4.5",
