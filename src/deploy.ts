@@ -39,13 +39,30 @@ export async function deploy(configPath: string = 'srm.config.ts', envFilePath: 
 
   console.log('Deploying configuration to Stripe...');
 
-  // Sync products and prices
-  await syncProductsAndPrices(stripe, config);
-  
+  // Initialize the mapping object
+  const priceIdMapping: Record<string, any> = {};
+
+  // Sync products and prices, collecting IDs into priceIdMapping
+  await syncProductsAndPrices(stripe, config, priceIdMapping);
+
+  // Generate price-id-mapping.json file
+  generatePriceIdMapping(priceIdMapping);
+
   console.log('Configuration deployed successfully.');
 }
 
-async function syncProductsAndPrices(stripe: Stripe, config: SRMConfig): Promise<void> {
+// Add this new function at the end of the file
+function generatePriceIdMapping(priceIdMapping: Record<string, any>): void {
+  const mappingPath = path.join(process.cwd(), 'price-id-mapping.json');
+  fs.writeFileSync(mappingPath, JSON.stringify(priceIdMapping, null, 2));
+  console.log('Price ID mapping saved to:', mappingPath);
+}
+
+async function syncProductsAndPrices(
+  stripe: Stripe,
+  config: SRMConfig,
+  priceIdMapping: Record<string, any>
+): Promise<void> {
   console.log('Synchronizing products and prices...');
   
   const { products } = config;
@@ -60,11 +77,6 @@ async function syncProductsAndPrices(stripe: Stripe, config: SRMConfig): Promise
     console.log(`Fetched existing products: ${existingProducts.data.length}`);
 
     let product = existingProducts.data.find((p) => p.metadata.srm_product_key === productKey);
-    if (product) {
-      console.log(`Existing product found: ${product.name}`);
-    } else {
-      console.log(`No existing product found for key: ${productKey}`);
-    }
 
     if (!product) {
       // Create new product
@@ -83,13 +95,25 @@ async function syncProductsAndPrices(stripe: Stripe, config: SRMConfig): Promise
       console.log(`Updated product: ${product.name}`);
     }
 
+    // Initialize the product entry in the mapping
+    priceIdMapping[productKey] = {
+      productId: product.id,
+      prices: {},
+    };
+
     // Sync prices
-    await syncPrices(stripe, product, productConfig.prices);
+    await syncPrices(stripe, product, productConfig.prices, priceIdMapping, productKey);
   }
   console.log('All products synchronized.');
 }
 
-async function syncPrices(stripe: Stripe, product: Stripe.Product, pricesConfig: { [key: string]: { amount: number; interval: string } }): Promise<void> {
+async function syncPrices(
+  stripe: Stripe,
+  product: Stripe.Product,
+  pricesConfig: { [key: string]: { amount: number; interval: string } },
+  priceIdMapping: Record<string, any>,
+  productKey: string
+): Promise<void> {
   console.log(`Synchronizing prices for product: ${product.name}`);
   
   for (const priceKey in pricesConfig) {
@@ -110,12 +134,6 @@ async function syncPrices(stripe: Stripe, product: Stripe.Product, pricesConfig:
         p.recurring?.interval === priceConfig.interval
     );
 
-    if (price && price.unit_amount && price.recurring?.interval) {
-      console.log(`Existing price found: ${price.unit_amount / 100}/${price.recurring?.interval}`);
-    } else {
-      console.log(`No existing price found for key: ${priceKey}`);
-    }
-
     if (!price) {
       // Create new price
       price = await stripe.prices.create({
@@ -133,6 +151,9 @@ async function syncPrices(stripe: Stripe, product: Stripe.Product, pricesConfig:
     } else {
       console.log(`Price for product ${product.name} already exists: $${priceConfig.amount / 100}/${priceConfig.interval}`);
     }
+
+    // Add the price ID to the mapping
+    priceIdMapping[productKey].prices[priceKey] = price.id;
   }
   console.log(`All prices synchronized for product: ${product.name}`);
 }

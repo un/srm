@@ -8,8 +8,8 @@
   },
   "scripts": {
     "build": "tsc",
-    "start": "ts-node bin/srm.ts",
-    "deploy:example": "ts-node bin/srm.ts deploy --config examples/srm.config.ts --env examples/.env"
+    "example:checkout": "ts-node examples/createCheckout.ts",
+    "example:deploy": "ts-node src/srm.ts deploy --config examples/srm.config.ts --env examples/.env"
   },
   "dependencies": {
     "dotenv": "^16.4.5",
