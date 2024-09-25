@@ -2,7 +2,7 @@ import path from 'path';
 import fs from 'fs';
 import Stripe from 'stripe';
 import dotenv from 'dotenv';
-import { SRMConfig } from './types';
+import { PreSRMConfig } from './types';
 
 // Load environment variables from .env file
 
@@ -26,7 +26,7 @@ export async function deploy(configPath: string = 'srm.config.ts', envFilePath: 
   }
 
   // Import the configuration using the resolved path
-  const config: SRMConfig = require(resolvedConfigPath).default;
+  const config: PreSRMConfig = require(resolvedConfigPath).default;
 
   // Initialize Stripe with your secret key
   const stripeSecretKey = process.env.STRIPE_SECRET_KEY;
@@ -60,7 +60,7 @@ function generatePriceIdMapping(priceIdMapping: Record<string, any>): void {
 
 async function syncProductsAndPrices(
   stripe: Stripe,
-  config: SRMConfig,
+  config: PreSRMConfig,
   priceIdMapping: Record<string, any>
 ): Promise<void> {
   console.log('Synchronizing products and prices...');

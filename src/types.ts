@@ -1,33 +1,16 @@
-export interface SRMConfig {
-  features: Record<string, string>;
-  products: Record<string, {
-    name: string;
-    prices: Record<string, {
-      amount: number;
-      interval: 'month' | 'year';
-    }>;
-    features: string[];
-  }>;
+export interface PreSRMConfig {
+  readonly features: Record<string, string>;
+  readonly products: Record<string, SRMProduct>;
 }
 
 export interface SRMProduct {
-  name: string;
-  prices: { [key: string]: SRMPrice };
-  features: string[];
+  readonly name: string;
+  readonly id: string; // Added 'id'
+  readonly prices: Record<string, SRMPrice>; // Added 'prices'
+  readonly features: readonly string[]; // Changed to readonly
 }
 
 export interface SRMPrice {
-  amount: number;
-  interval: 'day' | 'week' | 'month' | 'year';
-}
-
-export interface PriceConfig {
-  amount: number;
-  interval: 'day' | 'week' | 'month' | 'year';
-}
-
-export interface ProductConfig {
-  name: string;
-  prices: { [key: string]: PriceConfig };
-  features: string[];
+  readonly amount: number;
+  readonly interval: "day" | "week" | "month" | "year";
 }
