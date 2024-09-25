@@ -29,31 +29,35 @@ export type EnhancedSRMPrice<TPrice extends SRMPrice, PriceId extends string, Pr
 };
 
 export const createSRM = <T extends PreSRMConfig>(
-  config: T ,
+  config: T,
   dependencies: { stripe: Stripe }
 ): EnhancedSRMConfig<T> => {
   const { stripe } = dependencies;
   const createSubscriptionCheckoutUrl = makeCreateSubscriptionCheckoutUrl(stripe);
+  const enhancedProducts: Record<string, EnhancedSRMProduct<any, any>> = {};
 
-  // Enhance products with additional methods on prices
-  const enhancedProducts = Object.entries(config.products).reduce((acc, [productId, product]) => {
-    const enhancedPrices = Object.entries(product.prices).reduce((priceAcc, [priceId, price]) => {
-      const enhancedPrice: EnhancedSRMPrice<typeof price, string, string> = {
-        ...price,
-        createSubscriptionCheckoutUrl: ({ userId }) =>
-          createSubscriptionCheckoutUrl({ userId, productKey: productId, priceKey: priceId }),
+  for (const productId in config.products) {
+    if (config.products.hasOwnProperty(productId)) {
+      const product = config.products[productId];
+      const enhancedPrices: Record<string, EnhancedSRMPrice<any, any, any>> = {};
+
+      for (const priceId in product.prices) {
+        if (product.prices.hasOwnProperty(priceId)) {
+          const price = product.prices[priceId];
+          enhancedPrices[priceId] = {
+            ...price,
+            createSubscriptionCheckoutUrl: ({ userId }) =>
+              createSubscriptionCheckoutUrl({ userId, productKey: productId, priceKey: priceId }),
+          };
+        }
+      }
+
+      enhancedProducts[productId] = {
+        ...product,
+        prices: enhancedPrices,
       };
-      priceAcc[priceId as keyof typeof product.prices & string] = enhancedPrice;
-      return priceAcc;
-    }, {} as Record<string, EnhancedSRMPrice<any, any, any>>);
-
-    const enhancedProduct: EnhancedSRMProduct<typeof product, string> = {
-      ...product,
-      prices: enhancedPrices,
-    };
-    acc[productId as keyof typeof config.products & string] = enhancedProduct;
-    return acc;
-  }, {} as Record<string, EnhancedSRMProduct<any, any>>);
+    }
+  }
 
   return {
     ...config,
