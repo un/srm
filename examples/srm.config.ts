@@ -1,6 +1,7 @@
 import * as Stripe from 'stripe';
 import { PreSRMConfig } from "../src/types";
 import { createSRM } from "../src/lib";
+import { features } from 'process';
 
 export const config = {
   features: {
@@ -30,17 +31,18 @@ export const config = {
       },
       features: ['basicAnalytics', 'aiReporting'],
     },
-    mega: {
-      name: 'Mega Plan',
-      id: 'mega',
+    enterprise: {
+      name: 'Enterprise Plan',
+      id: 'enterprise',
       prices: {
-        monthly: {
-          amount: 10000, // $100/month
-          interval: 'month',
+        annual: {
+          amount: 20000, // $200/year
+          interval: 'year',
         },
       },
-        features: ['basicAnalytics', 'aiReporting'],
+      features: ['basicAnalytics', 'aiReporting', 'customReports'],
     },
+   
   },
 } as const;
 

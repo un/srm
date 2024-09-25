@@ -6,14 +6,12 @@ import {
   PreSRMConfig, 
 } from './types';
 
-// Define the interval type
-type Interval = 'month' | 'year';
 
 // Define the structure for the enhanced SRM configuration
 export type EnhancedSRMConfig<T extends PreSRMConfig> = {
   [P in keyof T]: P extends 'products'
     ? {
-        [K in keyof T['products']]: EnhancedSRMProduct<T['products'][K], K>;
+        [K in keyof T['products'] & string]: EnhancedSRMProduct<T['products'][K], K>;
       }
     : T[P];
 };
@@ -21,7 +19,7 @@ export type EnhancedSRMConfig<T extends PreSRMConfig> = {
 // Enhanced Product with methods added to prices
 export type EnhancedSRMProduct<TProduct extends SRMProduct, ProductId extends string> = Omit<TProduct, 'prices'> & {
   prices: {
-    [K in keyof TProduct['prices']]: EnhancedSRMPrice<TProduct['prices'][K], K, ProductId>;
+    [K in keyof TProduct['prices'] & string]: EnhancedSRMPrice<TProduct['prices'][K], K, ProductId>;
   };
 };
 
@@ -31,7 +29,7 @@ export type EnhancedSRMPrice<TPrice extends SRMPrice, PriceId extends string, Pr
 };
 
 export const createSRM = <T extends PreSRMConfig>(
-  config: T,
+  config: T ,
   dependencies: { stripe: Stripe }
 ): EnhancedSRMConfig<T> => {
   const { stripe } = dependencies;
@@ -40,27 +38,25 @@ export const createSRM = <T extends PreSRMConfig>(
   // Enhance products with additional methods on prices
   const enhancedProducts = Object.entries(config.products).reduce((acc, [productId, product]) => {
     const enhancedPrices = Object.entries(product.prices).reduce((priceAcc, [priceId, price]) => {
-      const enhancedPrice: EnhancedSRMPrice<typeof price, typeof priceId, typeof productId> = {
+      const enhancedPrice: EnhancedSRMPrice<typeof price, string, string> = {
         ...price,
         createSubscriptionCheckoutUrl: ({ userId }) =>
           createSubscriptionCheckoutUrl({ userId, productKey: productId, priceKey: priceId }),
       };
-      priceAcc[priceId as keyof typeof product.prices] = enhancedPrice;
+      priceAcc[priceId as keyof typeof product.prices & string] = enhancedPrice;
       return priceAcc;
-    }, {} as any);
+    }, {} as Record<string, EnhancedSRMPrice<any, any, any>>);
 
-    const enhancedProduct: EnhancedSRMProduct<typeof product, typeof productId> = {
+    const enhancedProduct: EnhancedSRMProduct<typeof product, string> = {
       ...product,
       prices: enhancedPrices,
     };
-    acc[productId as keyof typeof config.products] = enhancedProduct;
+    acc[productId as keyof typeof config.products & string] = enhancedProduct;
     return acc;
-  }, {} as any);
+  }, {} as Record<string, EnhancedSRMProduct<any, any>>);
 
   return {
     ...config,
     products: enhancedProducts,
   } as EnhancedSRMConfig<T>;
 };
-
-// type IdTypePrefixes = keyof typeof idTypes;

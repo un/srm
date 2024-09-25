@@ -8,8 +8,8 @@
   },
   "scripts": {
     "build": "tsc",
-    "example:checkout": "ts-node examples/createCheckout.ts",
-    "example:deploy": "ts-node src/srm.ts deploy --config examples/srm.config.ts",
+    "srm:checkout": "ts-node examples/createCheckout.ts",
+    "srm:deploy": "ts-node src/srm.ts deploy --config examples/srm.config.ts",
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {

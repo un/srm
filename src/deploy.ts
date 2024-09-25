@@ -1,21 +1,24 @@
-import path from 'path';
-import fs from 'fs';
-import Stripe from 'stripe';
-import dotenv from 'dotenv';
-import { PreSRMConfig } from './types';
+import path from "path";
+import fs from "fs";
+import Stripe from "stripe";
+import dotenv from "dotenv";
+import { PreSRMConfig } from "./types";
 
 // Load environment variables from .env file
 
-export async function deploy(configPath: string = 'srm.config.ts', envFilePath: string = '.env'): Promise<void> {
-  console.log('Starting deployment process...');
-  
+export async function deploy(
+  configPath: string = "srm.config.ts",
+  envFilePath: string = ".env"
+): Promise<void> {
+  console.log("Starting deployment process...");
+
   // Check if the .env file exists before loading
   if (fs.existsSync(envFilePath)) {
     dotenv.config({ path: envFilePath });
-    console.log('Environment variables loaded from:', envFilePath);
+    console.log("Environment variables loaded from:", envFilePath);
   } else {
     console.warn(`Environment file not found: ${envFilePath}`);
-    console.warn('Proceeding without loading environment variables.');
+    console.warn("Proceeding without loading environment variables.");
   }
 
   // Resolve the config path relative to the current working directory
@@ -26,18 +29,20 @@ export async function deploy(configPath: string = 'srm.config.ts', envFilePath: 
   }
 
   // Import the configuration using the resolved path
-  const config: PreSRMConfig = require(resolvedConfigPath).default;
+  const config = require(resolvedConfigPath).default;
 
   // Initialize Stripe with your secret key
   const stripeSecretKey = process.env.STRIPE_SECRET_KEY;
 
   if (!stripeSecretKey) {
-    throw new Error('Stripe secret key not found. Set STRIPE_SECRET_KEY in your environment variables or .env file.');
+    throw new Error(
+      "Stripe secret key not found. Set STRIPE_SECRET_KEY in your environment variables or .env file."
+    );
   }
 
-  const stripe = new Stripe(stripeSecretKey, { apiVersion: '2024-06-20' });
+  const stripe = new Stripe(stripeSecretKey, { apiVersion: "2024-06-20" });
 
-  console.log('Deploying configuration to Stripe...');
+  console.log("Deploying configuration to Stripe...");
 
   // Initialize the mapping object
   const priceIdMapping: Record<string, any> = {};
@@ -48,14 +53,14 @@ export async function deploy(configPath: string = 'srm.config.ts', envFilePath: 
   // Generate price-id-mapping.json file
   generatePriceIdMapping(priceIdMapping);
 
-  console.log('Configuration deployed successfully.');
+  console.log("Configuration deployed successfully.");
 }
 
 // Add this new function at the end of the file
 function generatePriceIdMapping(priceIdMapping: Record<string, any>): void {
-  const mappingPath = path.join(process.cwd(), 'price-id-mapping.json');
+  const mappingPath = path.join(process.cwd(), "price-id-mapping.json");
   fs.writeFileSync(mappingPath, JSON.stringify(priceIdMapping, null, 2));
-  console.log('Price ID mapping saved to:', mappingPath);
+  console.log("Price ID mapping saved to:", mappingPath);
 }
 
 async function syncProductsAndPrices(
@@ -63,10 +68,10 @@ async function syncProductsAndPrices(
   config: PreSRMConfig,
   priceIdMapping: Record<string, any>
 ): Promise<void> {
-  console.log('Synchronizing products and prices...');
-  
+  console.log("Synchronizing products and prices...");
+
   const { products } = config;
-  console.log('Products to synchronize:', products);
+  console.log("Products to synchronize:", products);
 
   for (const productKey in products) {
     const productConfig = products[productKey];
@@ -76,7 +81,9 @@ async function syncProductsAndPrices(
     const existingProducts = await stripe.products.list({ limit: 100 });
     console.log(`Fetched existing products: ${existingProducts.data.length}`);
 
-    let product = existingProducts.data.find((p) => p.metadata.srm_product_key === productKey);
+    let product = existingProducts.data.find(
+      (p) => p.metadata.srm_product_key === productKey
+    );
 
     if (!product) {
       // Create new product
@@ -102,9 +109,15 @@ async function syncProductsAndPrices(
     };
 
     // Sync prices
-    await syncPrices(stripe, product, productConfig.prices, priceIdMapping, productKey);
+    await syncPrices(
+      stripe,
+      product,
+      productConfig.prices,
+      priceIdMapping,
+      productKey
+    );
   }
-  console.log('All products synchronized.');
+  console.log("All products synchronized.");
 }
 
 async function syncPrices(
@@ -115,7 +128,7 @@ async function syncPrices(
   productKey: string
 ): Promise<void> {
   console.log(`Synchronizing prices for product: ${product.name}`);
-  
+
   for (const priceKey in pricesConfig) {
     const priceConfig = pricesConfig[priceKey];
     console.log(`Processing price: ${priceKey}`, priceConfig);
@@ -139,7 +152,7 @@ async function syncPrices(
       price = await stripe.prices.create({
         product: product.id,
         unit_amount: priceConfig.amount,
-        currency: 'usd', // Adjust the currency as needed
+        currency: "usd", // Adjust the currency as needed
         recurring: {
           interval: priceConfig.interval as Stripe.Price.Recurring.Interval,
         },
@@ -147,9 +160,17 @@ async function syncPrices(
           srm_price_key: priceKey,
         },
       });
-      console.log(`Created price for product ${product.name}: $${priceConfig.amount / 100}/${priceConfig.interval}`);
+      console.log(
+        `Created price for product ${product.name}: $${
+          priceConfig.amount / 100
+        }/${priceConfig.interval}`
+      );
     } else {
-      console.log(`Price for product ${product.name} already exists: $${priceConfig.amount / 100}/${priceConfig.interval}`);
+      console.log(
+        `Price for product ${product.name} already exists: $${
+          priceConfig.amount / 100
+        }/${priceConfig.interval}`
+      );
     }
 
     // Add the price ID to the mapping
