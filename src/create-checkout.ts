@@ -34,6 +34,12 @@ export function makeCreateSubscriptionCheckoutUrl(stripe: Stripe) {
       const session = await stripe.checkout.sessions.create({
         mode: "subscription",
         payment_method_types: ["card"],
+        metadata: { userId },
+        subscription_data: {
+          metadata: {
+            userId,
+          },
+        },
         line_items: [
           {
             price: priceId,
