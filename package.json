@@ -1,7 +1,7 @@
 {
   "name": "srm",
   "version": "1.0.0",
-  "description": "Subscription Resource Manager CLI Tool",
+  "description": "Stripe Resource Manager CLI Tool",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "bin": {
