@@ -22,13 +22,13 @@ interface FetchedProduct {
   features: string[]; // Adjust as needed
 }
 
-async function fetchProducts(): Promise<FetchedProduct[]> {
+export async function fetchProducts(): Promise<FetchedProduct[]> {
   const products: FetchedProduct[] = [];
   let hasMore = true;
   let startingAfter: string | undefined = undefined;
 
   while (hasMore) {
-    const response = await stripe.products.list({
+    const response: Stripe.Response<Stripe.ApiList<Stripe.Product>> = await stripe.products.list({
       limit: 100,
       starting_after: startingAfter,
     });
@@ -73,7 +73,7 @@ async function fetchProducts(): Promise<FetchedProduct[]> {
   return products;
 }
 
-function generateConfigFile(products: FetchedProduct[]) {
+export function generateConfigString(products: FetchedProduct[]): string {
   const config = {
     features: {
       basicAnalytics: 'Basic Analytics',
@@ -106,15 +106,5 @@ export const config: SRMConfig = ${JSON.stringify(config, null, 2)} as const;
 export default config;
 `;
 
-  fs.writeFileSync(path.resolve(__dirname, '../examples/srm.config.ts'), configContent, 'utf-8');
-  console.log('srm.config.ts has been generated successfully.');
+  return configContent;
 }
-
-(async () => {
-  try {
-    const products = await fetchProducts();
-    generateConfigFile(products);
-  } catch (error) {
-    console.error('Error fetching products from Stripe:', error);
-  }
-})();

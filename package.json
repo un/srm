@@ -2,16 +2,15 @@
   "name": "srm",
   "version": "1.0.0",
   "description": "Subscription Resource Manager CLI Tool",
-  "main": "dist/deploy.js",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
   "bin": {
-    "srm": "bin/srm.ts"
+    "srm": "dist/cli.js"
   },
   "scripts": {
     "build": "tsc",
-    "srm:checkout": "ts-node examples/createCheckout.ts",
-    "srm:deploy": "ts-node src/srm.ts deploy --config examples/srm.config.ts",
-    "srm:pull": "ts-node ./src/fetchStripeConfig.ts",
-    "typecheck": "tsc --noEmit"
+    "prepublishOnly": "npm run build",
+    "srm": "ts-node src/cli.ts"
   },
   "dependencies": {
     "dotenv": "^16.4.5",
@@ -23,7 +22,7 @@
     "@types/node": "^20.16.5",
     "typescript": "^5.6.2"
   },
-  "keywords": [],
+  "keywords": ["stripe", "subscription", "management"],
   "author": "",
   "license": "ISC"
 }

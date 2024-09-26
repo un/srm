@@ -46,7 +46,7 @@ export const createSRM = <T extends PreSRMConfig>(
           const price = product.prices[priceId];
           enhancedPrices[priceId] = {
             ...price,
-            createSubscriptionCheckoutUrl: ({ userId }) =>
+            createSubscriptionCheckoutUrl: ({ userId }: { userId: string }) =>
               createSubscriptionCheckoutUrl({ userId, productKey: productId, priceKey: priceId }),
           };
         }

@@ -2,6 +2,7 @@ import path from "path";
 import fs from "fs";
 import Stripe from "stripe";
 import dotenv from "dotenv";
+import * as tsNode from 'ts-node';
 import { PreSRMConfig } from "./types";
 
 // Load environment variables from .env file
@@ -28,8 +29,15 @@ export async function deploy(
     throw new Error(`Configuration file not found: ${resolvedConfigPath}`);
   }
 
+  // Register ts-node to handle TypeScript files
+  tsNode.register({
+    compilerOptions: {
+      module: 'commonjs',
+    },
+  });
+
   // Import the configuration using the resolved path
-  const config = require(resolvedConfigPath).default;
+  const { config } = await import(resolvedConfigPath);
 
   // Initialize Stripe with your secret key
   const stripeSecretKey = process.env.STRIPE_SECRET_KEY;
