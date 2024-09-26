@@ -1,7 +1,5 @@
-import * as Stripe from 'stripe';
 import { PreSRMConfig } from "../src/types";
-import { createSRM } from "../src/lib";
-import { features } from 'process';
+
 
 export const config = {
   features: {
@@ -44,13 +42,6 @@ export const config = {
     },
    
   },
-} as const;
+} satisfies PreSRMConfig;
 
 
-export type SRMConfig = typeof config;
-
-const stripe = new Stripe.default(process.env.STRIPE_SECRET_KEY as string, { apiVersion: '2024-06-20' });
-
-export default createSRM<SRMConfig>(config, {
-  stripe: stripe,
-});

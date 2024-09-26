@@ -6,17 +6,22 @@ SRM is a streamlined Stripe Resource Manager designed to simplify the management
 
 ## Table of Contents
 
-- [Features](#features)
-- [Prerequisites](#prerequisites)
-- [Installation](#installation)
-- [Configuration](#configuration)
-- [Usage](#usage)
-  - [Deploying Configuration to Stripe](#deploying-configuration-to-stripe)
-  - [Creating a Checkout URL](#creating-a-checkout-url)
-- [Project Structure](#project-structure)
-- [Scripts](#scripts)
-- [Contributing](#contributing)
-- [License](#license)
+- [SRM (Stripe Resource Manager)](#srm-stripe-resource-manager)
+  - [Table of Contents](#table-of-contents)
+  - [Features](#features)
+  - [Prerequisites](#prerequisites)
+  - [Installation](#installation)
+  - [Configuration](#configuration)
+  - [Deployment](#deployment)
+    - [Steps to Deploy](#steps-to-deploy)
+  - [Usage](#usage)
+    - [Deploying Configuration to Stripe](#deploying-configuration-to-stripe)
+    - [Creating a Checkout URL](#creating-a-checkout-url)
+  - [Project Structure](#project-structure)
+  - [Scripts](#scripts)
+  - [Price ID Mapping](#price-id-mapping)
+  - [Contributing](#contributing)
+  - [License](#license)
 
 ## Features
 
@@ -40,7 +45,7 @@ Before getting started, ensure you have the following installed:
 
    ```bash
    git clone https://github.com/benjaminshafii/srm.git
-   
+
    cd srm
    ```
 
@@ -72,19 +77,22 @@ Before getting started, ensure you have the following installed:
 
    Navigate to `./examples/srm.config.ts` and define your products, pricing plans, and features. Here's an example configuration:
 
-   ```typescript
+   ````typescript:examples/srm.config.ts
    import * as Stripe from 'stripe';
    import { SRMConfig } from "../src/types";
    import { createSRM } from "../src/lib";
-   
-   export const config: SRMConfig = {
+   import { features } from 'process';
+
+   export const config = {
      features: {
        basicAnalytics: 'Basic Analytics',
        aiReporting: 'AI Reporting',
+       customReports: 'Custom Reports',
      },
      products: {
        hobby: {
          name: 'Hobby Plan',
+         id:'hobby',
          prices: {
            monthly: {
              amount: 1000, // $10/month
@@ -95,6 +103,7 @@ Before getting started, ensure you have the following installed:
        },
        pro: {
          name: 'Pro Plan',
+         id: 'pro',
          prices: {
            annual: {
              amount: 20000, // $200/year
@@ -103,51 +112,106 @@ Before getting started, ensure you have the following installed:
          },
          features: ['basicAnalytics', 'aiReporting'],
        },
+       enterprise: {
+         name: 'Enterprise Plan',
+         id: 'enterprise',
+         prices: {
+           annual: {
+             amount: 20000, // $200/year
+             interval: 'year',
+           },
+         },
+         features: ['basicAnalytics', 'aiReporting', 'customReports'],
+       },
+       megaPlan: {
+         name: 'Mega Plan',
+         id: 'megaPlan',
+         prices: {
+           annual: {
+             amount: 50000, // $500/year
+             interval: 'year',
+           },
+         },
+         features: ['basicAnalytics', 'aiReporting', 'customReports', 'premiumSupport'],
+       },
      },
    } as const;
-   
+
+   export type SRMConfig = typeof config;
+
    const stripe = new Stripe.default(process.env.STRIPE_SECRET_KEY as string, { apiVersion: '2024-06-20' });
-   
-   export default createSRM(config, {
+
+   export default createSRM<SRMConfig>(config, {
      stripe: stripe,
    });
-   ```
+   ````
 
    - **Features**: Define the features available in your products.
    - **Products**: Define your subscription products, their pricing plans, and associated features.
    - **Stripe Integration**: Initialize Stripe with your secret key.
 
+## Deployment
 
+After configuring your products and pricing plans, deploy the configuration to Stripe to synchronize your local setup with your Stripe account.
 
-2. **Deployment Process**
+### Steps to Deploy
 
-   - **Products Synchronization**: Creates or updates products in Stripe based on your configuration.
-   - **Prices Synchronization**: Creates or updates pricing plans for each product.
-   - **Price ID Mapping**: Generates a `price-id-mapping.json` file that maps your local price keys to Stripe price IDs.
+1. **Ensure Configuration is Defined**
+
+   Make sure that your `srm.config.ts` file is correctly defined in the `./examples` directory.
+
+2. **Run the Deployment Script**
+
+   Use the CLI to deploy your configurations:
+
+   ```bash
+   npx ts-node ./src/srm.ts deploy --config ./examples/srm.config.ts --env .env
+   ```
+
+   **Parameters:**
+   
+   - `--config`: Path to your SRM configuration file.
+   - `--env`: Path to your environment variables file.
+
+   **Output:**
+
+   - Synchronizes products and prices with Stripe.
+   - Generates a `price-id-mapping.json` file in the root directory, mapping your local price keys to Stripe price IDs.
+
+## Usage
+
+### Deploying Configuration to Stripe
+
+Deploy your configuration to Stripe to create or update products and pricing plans.
 
 ### Creating a Checkout URL
 
-Use the provided example script to generate a Stripe Checkout URL for a subscription.
+Use the provided example scripts to generate Stripe Checkout URLs for subscriptions.
 
 1. **Example Script**
 
    Located at `./examples/createCheckout.ts`.
 
-   ```typescript
-   import srm from "./srm.config";
+   ````typescript:examples/createCheckout.ts
    import dotenv from "dotenv";
-   
    dotenv.config();
-   
+   import  srm  from "./srm.config";
+
    (async () => {
-       const url =
-         await srm.products.hobby.prices.monthly.createSubscriptionCheckoutUrl({
-           userId: "123",
-         });
-   
-     console.log(url);
+     const url = await srm
+       .products
+       .enterprise
+       .prices.annual.createSubscriptionCheckoutUrl({ userId: 'testId' })
+
+     console.log(url)
    })();
-   ```
+   ````
+
+   **Explanation:**
+
+   - Imports and initializes environment variables.
+   - Imports the SRM configuration.
+   - Generates a checkout URL for the `enterprise` product with the `annual` pricing plan for the user with `userId: 'testId'`.
 
 2. **Run the Example Script**
 
@@ -155,7 +219,7 @@ Use the provided example script to generate a Stripe Checkout URL for a subscrip
    ts-node ./examples/createCheckout.ts
    ```
 
-   **Output**: The script will output a Stripe Checkout URL that you can use to initiate a subscription for the user with `userId: "123"`.
+   **Output**: The script will output a Stripe Checkout URL that you can use to initiate a subscription for the specified user.
 
 ## Project Structure
 
@@ -177,6 +241,62 @@ srm/
 └── README.md
 ```
 
+## Scripts
+
+- **Deploy Configuration**
+
+  Deploys the SRM configuration to Stripe.
+
+  ```bash
+  npx ts-node ./src/srm.ts deploy --config ./examples/srm.config.ts --env .env
+  ```
+
+- **Create Checkout URL**
+
+  Generates a Stripe Checkout URL for a specific product and pricing plan.
+
+  ```bash
+  ts-node ./examples/createCheckout.ts
+  ```
+
+## Price ID Mapping
+
+After deploying your configuration, a `price-id-mapping.json` file is generated in the root directory. This file maps your local price keys to Stripe price IDs, enabling seamless reference in your application.
+
+**Example `price-id-mapping.json`:**
+
+```json
+{
+  "hobby": {
+    "productId": "prod_ABC123",
+    "prices": {
+      "monthly": "price_DEF456"
+    }
+  },
+  "pro": {
+    "productId": "prod_GHI789",
+    "prices": {
+      "annual": "price_JKL012"
+    }
+  },
+  "enterprise": {
+    "productId": "prod_MNO345",
+    "prices": {
+      "annual": "price_PQR678"
+    }
+  },
+  "megaPlan": {
+    "productId": "prod_STU901",
+    "prices": {
+      "annual": "price_VWX234"
+    }
+  }
+}
+```
+
+**Usage in Application:**
+
+The `createCheckout.ts` script utilizes this mapping to generate checkout URLs based on the product and price keys defined in your configuration.
 
 ## Contributing
 
