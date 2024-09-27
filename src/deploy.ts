@@ -3,7 +3,8 @@ import fs from "fs";
 import Stripe from "stripe";
 import dotenv from "dotenv";
 import * as tsNode from 'ts-node';
-import { PreSRMConfig } from "./types";
+import { PreSRMConfig, SRMPrice } from "./types";
+import { taxCodes } from './taxCodes';
 
 // Load environment variables from .env file
 
@@ -93,21 +94,22 @@ async function syncProductsAndPrices(
       (p) => p.metadata.srm_product_key === productKey
     );
 
+    const productData = {
+      name: productConfig.name,
+      metadata: {
+        srm_product_key: productKey,
+      },
+      tax_code: productConfig.taxCode || taxCodes.DEFAULT, // Use default if not provided
+    };
+
     if (!product) {
       // Create new product
-      product = await stripe.products.create({
-        name: productConfig.name,
-        metadata: {
-          srm_product_key: productKey,
-        },
-      });
-      console.log(`Created product: ${product.name}`);
+      product = await stripe.products.create(productData);
+      console.log(`Created product: ${product.name} with tax code: ${product.tax_code}`);
     } else {
       // Update existing product if necessary
-      product = await stripe.products.update(product.id, {
-        name: productConfig.name,
-      });
-      console.log(`Updated product: ${product.name}`);
+      product = await stripe.products.update(product.id, productData);
+      console.log(`Updated product: ${product.name} with tax code: ${product.tax_code}`);
     }
 
     // Initialize the product entry in the mapping
@@ -131,7 +133,7 @@ async function syncProductsAndPrices(
 async function syncPrices(
   stripe: Stripe,
   product: Stripe.Product,
-  pricesConfig: { [key: string]: { amount: number; interval: string; type: string } },
+  pricesConfig: { [key: string]: SRMPrice },
   priceIdMapping: Record<string, any>,
   productKey: string
 ): Promise<void> {
@@ -139,7 +141,8 @@ async function syncPrices(
 
   for (const priceKey in pricesConfig) {
     const priceConfig = pricesConfig[priceKey];
-    console.log(`Processing price: ${priceKey}`, priceConfig);
+
+    // Set default tax code if not provided
 
     // Check if price already exists
     const existingPrices = await stripe.prices.list({
@@ -167,6 +170,7 @@ async function syncPrices(
         metadata: {
           srm_price_key: priceKey,
         },
+        tax_behavior: 'exclusive',
       };
 
       if (priceConfig.type === "recurring") {

@@ -1,4 +1,5 @@
 import { PreSRMConfig } from "../src/types";
+import { taxCodes } from "../src/taxCodes";
 
 
 export const config = {
@@ -9,15 +10,16 @@ export const config = {
   products: {
     hobby: {
       name: 'Hobby Plan',
-      id:'hobby',
+      id: 'hobby',
+      taxCode: taxCodes.SOFTWARE_AS_A_SERVICE,
       prices: {
         monthly: {
-          amount: 1000, // $10/month
+          amount: 1000,
           interval: 'month',
           type: 'recurring',
         },
         lifetime: {
-          amount: 20000, // $200 one-time
+          amount: 20000,
           interval: 'one_time',
           type: 'one_time',
         },
@@ -27,9 +29,10 @@ export const config = {
     pro: {
       name: 'Pro Plan',
       id: 'pro',
+      taxCode: taxCodes.SOFTWARE_AS_A_SERVICE,
       prices: {
         annual: {
-          amount: 20000, // $200/year
+          amount: 20000,
           interval: 'year',
           type: 'recurring',
         },
@@ -41,14 +44,14 @@ export const config = {
       id: 'enterprise',
       prices: {
         annual: {
-          amount: 20000, // $200/year
+          amount: 20000,
           interval: 'year',
           type: 'recurring',
+          // tax_code is optional; will default if not specified
         },
       },
       features: ['basicAnalytics', 'aiReporting', 'customReports'],
     },
-   
   },
 } satisfies PreSRMConfig;
 
