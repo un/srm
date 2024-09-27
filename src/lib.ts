@@ -1,11 +1,13 @@
-import { makeCreateSubscriptionCheckoutUrl } from './create-checkout';
+import { makeCreateSubscriptionCheckoutUrl, makeCreateOneTimePaymentCheckoutUrl } from './create-checkout';
 import Stripe from 'stripe';
 import { 
   SRMProduct, 
   SRMPrice, 
   PreSRMConfig, 
+  CheckoutUrlParams, 
+  OneTimeSRMPrice,
+  RecurringSRMPrice
 } from './types';
-
 
 // Define the structure for the enhanced SRM configuration
 export type EnhancedSRMConfig<T extends PreSRMConfig> = {
@@ -17,16 +19,24 @@ export type EnhancedSRMConfig<T extends PreSRMConfig> = {
 };
 
 // Enhanced Product with methods added to prices
-export type EnhancedSRMProduct<TProduct extends SRMProduct, ProductId extends string> = Omit<TProduct, 'prices'> & {
-  prices: {
-    [K in keyof TProduct['prices'] & string]: EnhancedSRMPrice<TProduct['prices'][K], K, ProductId>;
+export type EnhancedSRMProduct<TProduct extends SRMProduct, ProductId extends string> = 
+  TProduct & {
+    prices: {
+      [K in keyof TProduct['prices'] & string]: EnhancedSRMPrice<TProduct['prices'][K], K, ProductId>;
+    };
   };
-};
 
-// Enhanced Price with the createSubscriptionCheckoutUrl method
-export type EnhancedSRMPrice<TPrice extends SRMPrice, PriceId extends string, ProductId extends string> = TPrice & {
-  createSubscriptionCheckoutUrl: (params: { userId: string }) => Promise<string>;
-};
+// Enhanced Price with appropriate methods based on type
+export type EnhancedSRMPrice<TPrice extends SRMPrice, PriceId extends string, ProductId extends string> = 
+  TPrice['type'] extends 'recurring' 
+    ? RecurringSRMPrice & {
+        createSubscriptionCheckoutUrl: (params: CheckoutUrlParams) => Promise<string>;
+      }
+    : TPrice['type'] extends 'one_time'
+    ? OneTimeSRMPrice & {
+        createOneTimePaymentCheckoutUrl: (params: CheckoutUrlParams) => Promise<string>;
+      }
+    : never;
 
 export const createSRM = <T extends PreSRMConfig>(
   config: T,
@@ -34,6 +44,7 @@ export const createSRM = <T extends PreSRMConfig>(
 ): EnhancedSRMConfig<T> => {
   const { stripe } = dependencies;
   const createSubscriptionCheckoutUrl = makeCreateSubscriptionCheckoutUrl(stripe);
+  const createOneTimePaymentCheckoutUrl = makeCreateOneTimePaymentCheckoutUrl(stripe);
   const enhancedProducts: Record<string, EnhancedSRMProduct<any, any>> = {};
 
   for (const productId in config.products) {
@@ -44,11 +55,19 @@ export const createSRM = <T extends PreSRMConfig>(
       for (const priceId in product.prices) {
         if (product.prices.hasOwnProperty(priceId)) {
           const price = product.prices[priceId];
-          enhancedPrices[priceId] = {
-            ...price,
-            createSubscriptionCheckoutUrl: ({ userId }: { userId: string }) =>
-              createSubscriptionCheckoutUrl({ userId, productKey: productId, priceKey: priceId }),
-          };
+          if (price.type === 'recurring') {
+            enhancedPrices[priceId] = {
+              ...price,
+              createSubscriptionCheckoutUrl: ({ userId, successUrl, cancelUrl }: CheckoutUrlParams) =>
+                createSubscriptionCheckoutUrl({ userId, productKey: productId, priceKey: priceId, successUrl, cancelUrl })
+            } as EnhancedSRMPrice<typeof price, typeof priceId, typeof productId>;
+          } else if (price.type === 'one_time') {
+            enhancedPrices[priceId] = {
+              ...price,
+              createOneTimePaymentCheckoutUrl: ({ userId, successUrl, cancelUrl }: CheckoutUrlParams) =>
+                createOneTimePaymentCheckoutUrl({ userId, productKey: productId, priceKey: priceId, successUrl, cancelUrl })
+            } as EnhancedSRMPrice<typeof price, typeof priceId, typeof productId>;
+          }
         }
       }
 

@@ -131,7 +131,7 @@ async function syncProductsAndPrices(
 async function syncPrices(
   stripe: Stripe,
   product: Stripe.Product,
-  pricesConfig: { [key: string]: { amount: number; interval: string } },
+  pricesConfig: { [key: string]: { amount: number; interval: string; type: string } },
   priceIdMapping: Record<string, any>,
   productKey: string
 ): Promise<void> {
@@ -148,36 +148,44 @@ async function syncPrices(
     });
     console.log(`Fetched existing prices: ${existingPrices.data.length}`);
 
-    let price = existingPrices.data.find(
-      (p) =>
-        p.metadata.srm_price_key === priceKey &&
-        p.unit_amount === priceConfig.amount &&
-        p.recurring?.interval === priceConfig.interval
-    );
+    let price = existingPrices.data.find((p) => {
+      const matchesKey = p.metadata.srm_price_key === priceKey;
+      const matchesAmount = p.unit_amount === priceConfig.amount;
+      const matchesInterval = priceConfig.type === "recurring"
+        ? p.recurring?.interval === priceConfig.interval
+        : !p.recurring;
+      const matchesType = p.recurring ? "recurring" : "one_time";
+      return matchesKey && matchesAmount && matchesInterval && matchesType === priceConfig.type;
+    });
 
     if (!price) {
-      // Create new price
-      price = await stripe.prices.create({
+      // Create new price based on type
+      const priceParams: Stripe.PriceCreateParams = {
         product: product.id,
         unit_amount: priceConfig.amount,
         currency: "usd", // Adjust the currency as needed
-        recurring: {
-          interval: priceConfig.interval as Stripe.Price.Recurring.Interval,
-        },
         metadata: {
           srm_price_key: priceKey,
         },
-      });
+      };
+
+      if (priceConfig.type === "recurring") {
+        priceParams.recurring = {
+          interval: priceConfig.interval as Stripe.Price.Recurring.Interval,
+        };
+      }
+
+      price = await stripe.prices.create(priceParams);
       console.log(
         `Created price for product ${product.name}: $${
           priceConfig.amount / 100
-        }/${priceConfig.interval}`
+        }/${priceConfig.type === "recurring" ? priceConfig.interval : "one-time"}`
       );
     } else {
       console.log(
         `Price for product ${product.name} already exists: $${
           priceConfig.amount / 100
-        }/${priceConfig.interval}`
+        }/${priceConfig.type === "recurring" ? priceConfig.interval : "one-time"}`
       );
     }
 

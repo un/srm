@@ -14,6 +14,12 @@ export const config = {
         monthly: {
           amount: 1000, // $10/month
           interval: 'month',
+          type: 'recurring',
+        },
+        lifetime: {
+          amount: 20000, // $200 one-time
+          interval: 'one_time',
+          type: 'one_time',
         },
       },
       features: ['basicAnalytics'],
@@ -25,6 +31,7 @@ export const config = {
         annual: {
           amount: 20000, // $200/year
           interval: 'year',
+          type: 'recurring',
         },
       },
       features: ['basicAnalytics', 'aiReporting'],
@@ -36,6 +43,7 @@ export const config = {
         annual: {
           amount: 20000, // $200/year
           interval: 'year',
+          type: 'recurring',
         },
       },
       features: ['basicAnalytics', 'aiReporting', 'customReports'],

@@ -16,7 +16,16 @@ const srm = createSRM<Config>(config, {
 (async () => {
   const url = await srm.products.enterprise.prices.annual.createSubscriptionCheckoutUrl({
     userId: "testId",
+    successUrl: "http://localhost:3000/success",
+    cancelUrl: "http://localhost:3000/cancel",
   });
-
+  const oneTimeUrl = await srm.products.hobby.prices.lifetime.createOneTimePaymentCheckoutUrl({
+    userId: "testId",
+    successUrl: "http://localhost:3000/success",
+    cancelUrl: "http://localhost:3000/cancel",
+  });
   console.log(url);
+  console.log(oneTimeUrl);
 })();
+
+
