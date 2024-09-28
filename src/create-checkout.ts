@@ -1,20 +1,36 @@
 import fs from "fs";
 import Stripe from "stripe";
 
-interface CreateCheckoutParams {
+interface BaseCheckoutParams {
   userId: string;
   productKey: string;
   priceKey: string;
   quantity?: number;
   successUrl: string;
   cancelUrl: string;
+  allowPromotionCodes?: boolean;
 }
+
+interface SubscriptionCheckoutParams extends BaseCheckoutParams {
+  trialPeriodDays?: number;
+}
+
+interface OneTimePaymentCheckoutParams extends BaseCheckoutParams {}
 
 export function makeCreateSubscriptionCheckoutUrl(stripe: Stripe) {
   return async function createSubscriptionCheckoutUrl(
-    params: CreateCheckoutParams
+    params: SubscriptionCheckoutParams
   ): Promise<string> {
-    const { userId, productKey, priceKey, quantity, successUrl, cancelUrl } = params;
+    const {
+      userId,
+      productKey,
+      priceKey,
+      quantity,
+      successUrl,
+      cancelUrl,
+      allowPromotionCodes = false,
+      trialPeriodDays,
+    } = params;
 
     const priceId = getPriceId(productKey, priceKey);
 
@@ -24,7 +40,7 @@ export function makeCreateSubscriptionCheckoutUrl(stripe: Stripe) {
         payment_method_types: ["card"],
         metadata: { userId },
         subscription_data: {
-          trial_period_days: 3,
+          ...(trialPeriodDays && { trial_period_days: trialPeriodDays }),
           metadata: {
             userId,
           },
@@ -38,7 +54,7 @@ export function makeCreateSubscriptionCheckoutUrl(stripe: Stripe) {
         success_url: successUrl,
         cancel_url: cancelUrl,
         client_reference_id: userId,
-        allow_promotion_codes: true,
+        allow_promotion_codes: allowPromotionCodes,
       });
 
       return session.url!;
@@ -51,9 +67,17 @@ export function makeCreateSubscriptionCheckoutUrl(stripe: Stripe) {
 
 export function makeCreateOneTimePaymentCheckoutUrl(stripe: Stripe) {
   return async function createOneTimePaymentCheckoutUrl(
-    params: CreateCheckoutParams
+    params: OneTimePaymentCheckoutParams
   ): Promise<string> {
-    const { userId, productKey, priceKey, quantity, successUrl, cancelUrl } = params;
+    const {
+      userId,
+      productKey,
+      priceKey,
+      quantity,
+      successUrl,
+      cancelUrl,
+      allowPromotionCodes = false,
+    } = params;
 
     const priceId = getPriceId(productKey, priceKey);
 
@@ -76,7 +100,7 @@ export function makeCreateOneTimePaymentCheckoutUrl(stripe: Stripe) {
         success_url: successUrl,
         cancel_url: cancelUrl,
         client_reference_id: userId,
-        allow_promotion_codes: true,
+        allow_promotion_codes: allowPromotionCodes,
       });
 
       return session.url!;

@@ -1,12 +1,18 @@
 import Stripe from "stripe";
-interface CreateCheckoutParams {
+interface BaseCheckoutParams {
     userId: string;
     productKey: string;
     priceKey: string;
     quantity?: number;
     successUrl: string;
     cancelUrl: string;
+    allowPromotionCodes?: boolean;
 }
-export declare function makeCreateSubscriptionCheckoutUrl(stripe: Stripe): (params: CreateCheckoutParams) => Promise<string>;
-export declare function makeCreateOneTimePaymentCheckoutUrl(stripe: Stripe): (params: CreateCheckoutParams) => Promise<string>;
+interface SubscriptionCheckoutParams extends BaseCheckoutParams {
+    trialPeriodDays?: number;
+}
+interface OneTimePaymentCheckoutParams extends BaseCheckoutParams {
+}
+export declare function makeCreateSubscriptionCheckoutUrl(stripe: Stripe): (params: SubscriptionCheckoutParams) => Promise<string>;
+export declare function makeCreateOneTimePaymentCheckoutUrl(stripe: Stripe): (params: OneTimePaymentCheckoutParams) => Promise<string>;
 export {};

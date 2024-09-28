@@ -8,7 +8,7 @@ exports.makeCreateOneTimePaymentCheckoutUrl = makeCreateOneTimePaymentCheckoutUr
 const fs_1 = __importDefault(require("fs"));
 function makeCreateSubscriptionCheckoutUrl(stripe) {
     return async function createSubscriptionCheckoutUrl(params) {
-        const { userId, productKey, priceKey, quantity, successUrl, cancelUrl } = params;
+        const { userId, productKey, priceKey, quantity, successUrl, cancelUrl, allowPromotionCodes = false, trialPeriodDays, } = params;
         const priceId = getPriceId(productKey, priceKey);
         try {
             const session = await stripe.checkout.sessions.create({
@@ -16,7 +16,7 @@ function makeCreateSubscriptionCheckoutUrl(stripe) {
                 payment_method_types: ["card"],
                 metadata: { userId },
                 subscription_data: {
-                    trial_period_days: 3,
+                    ...(trialPeriodDays && { trial_period_days: trialPeriodDays }),
                     metadata: {
                         userId,
                     },
@@ -30,7 +30,7 @@ function makeCreateSubscriptionCheckoutUrl(stripe) {
                 success_url: successUrl,
                 cancel_url: cancelUrl,
                 client_reference_id: userId,
-                allow_promotion_codes: true,
+                allow_promotion_codes: allowPromotionCodes,
             });
             return session.url;
         }
@@ -42,7 +42,7 @@ function makeCreateSubscriptionCheckoutUrl(stripe) {
 }
 function makeCreateOneTimePaymentCheckoutUrl(stripe) {
     return async function createOneTimePaymentCheckoutUrl(params) {
-        const { userId, productKey, priceKey, quantity, successUrl, cancelUrl } = params;
+        const { userId, productKey, priceKey, quantity, successUrl, cancelUrl, allowPromotionCodes = false, } = params;
         const priceId = getPriceId(productKey, priceKey);
         try {
             const session = await stripe.checkout.sessions.create({
@@ -63,7 +63,7 @@ function makeCreateOneTimePaymentCheckoutUrl(stripe) {
                 success_url: successUrl,
                 cancel_url: cancelUrl,
                 client_reference_id: userId,
-                allow_promotion_codes: true,
+                allow_promotion_codes: allowPromotionCodes,
             });
             return session.url;
         }
