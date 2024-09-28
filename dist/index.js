@@ -14,13 +14,10 @@ var __exportStar = (this && this.__exportStar) || function(m, exports) {
     for (var p in m) if (p !== "default" && !Object.prototype.hasOwnProperty.call(exports, p)) __createBinding(exports, m, p);
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.taxCodes = exports.pull = exports.deploy = exports.createSRM = void 0;
+exports.taxCodes = exports.createSRM = void 0;
 var lib_1 = require("./lib");
 Object.defineProperty(exports, "createSRM", { enumerable: true, get: function () { return lib_1.createSRM; } });
-var deploy_1 = require("./deploy");
-Object.defineProperty(exports, "deploy", { enumerable: true, get: function () { return deploy_1.deploy; } });
-var pull_1 = require("./pull");
-Object.defineProperty(exports, "pull", { enumerable: true, get: function () { return pull_1.pull; } });
 var taxCodes_1 = require("./taxCodes");
 Object.defineProperty(exports, "taxCodes", { enumerable: true, get: function () { return taxCodes_1.taxCodes; } });
 __exportStar(require("./types"), exports);
+// Do not export deploy or pull here
