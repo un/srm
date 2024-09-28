@@ -34,4 +34,5 @@ export interface CheckoutUrlParams {
   userId: string;
   successUrl: string;
   cancelUrl: string;
+  allowPromotionCodes?: boolean;
 }

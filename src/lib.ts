@@ -8,10 +8,7 @@ import {
 } from './types';
 
 // Extended CheckoutUrlParams to include new options
-interface ExtendedCheckoutUrlParams extends CheckoutUrlParams {
-  allowPromotionCodes?: boolean;
-  trialPeriodDays?: number;
-}
+
 
 // Simplified EnhancedSRMConfig type
 export type EnhancedSRMConfig<T extends PreSRMConfig> = T & {
@@ -29,8 +26,8 @@ type EnhancedSRMProduct<T extends SRMProduct> = T & {
 
 // Simplified EnhancedSRMPrice type
 type EnhancedSRMPrice<T extends SRMPrice> = T['type'] extends 'recurring'
-  ? T & { createSubscriptionCheckoutUrl: (params: ExtendedCheckoutUrlParams) => Promise<string> }
-  : T & { createOneTimePaymentCheckoutUrl: (params: ExtendedCheckoutUrlParams) => Promise<string> };
+  ? T & { createSubscriptionCheckoutUrl: (params: CheckoutUrlParams & { trialPeriodDays?: number }) => Promise<string> }
+  : T & { createOneTimePaymentCheckoutUrl: (params: CheckoutUrlParams) => Promise<string> };
 
 export const createSRM = <T extends PreSRMConfig>(
   config: T,
