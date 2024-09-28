@@ -9,6 +9,12 @@ import {
   RecurringSRMPrice
 } from './types';
 
+// Extended CheckoutUrlParams to include new options
+interface ExtendedCheckoutUrlParams extends CheckoutUrlParams {
+  allowPromotionCodes?: boolean;
+  trialPeriodDays?: number;
+}
+
 // Define the structure for the enhanced SRM configuration
 export type EnhancedSRMConfig<T extends PreSRMConfig> = {
   [P in keyof T]: P extends 'products'
@@ -30,11 +36,11 @@ export type EnhancedSRMProduct<TProduct extends SRMProduct, ProductId extends st
 export type EnhancedSRMPrice<TPrice extends SRMPrice, PriceId extends string, ProductId extends string> = 
   TPrice['type'] extends 'recurring' 
     ? RecurringSRMPrice & {
-        createSubscriptionCheckoutUrl: (params: CheckoutUrlParams) => Promise<string>;
+        createSubscriptionCheckoutUrl: (params: ExtendedCheckoutUrlParams) => Promise<string>;
       }
     : TPrice['type'] extends 'one_time'
     ? OneTimeSRMPrice & {
-        createOneTimePaymentCheckoutUrl: (params: CheckoutUrlParams) => Promise<string>;
+        createOneTimePaymentCheckoutUrl: (params: ExtendedCheckoutUrlParams) => Promise<string>;
       }
     : never;
 
@@ -58,14 +64,14 @@ export const createSRM = <T extends PreSRMConfig>(
           if (price.type === 'recurring') {
             enhancedPrices[priceId] = {
               ...price,
-              createSubscriptionCheckoutUrl: ({ userId, successUrl, cancelUrl }: CheckoutUrlParams) =>
-                createSubscriptionCheckoutUrl({ userId, productKey: productId, priceKey: priceId, successUrl, cancelUrl })
+              createSubscriptionCheckoutUrl: ({ userId, successUrl, cancelUrl, allowPromotionCodes, trialPeriodDays }: ExtendedCheckoutUrlParams) =>
+                createSubscriptionCheckoutUrl({ userId, productKey: productId, priceKey: priceId, successUrl, cancelUrl, allowPromotionCodes, trialPeriodDays })
             } as EnhancedSRMPrice<typeof price, typeof priceId, typeof productId>;
           } else if (price.type === 'one_time') {
             enhancedPrices[priceId] = {
               ...price,
-              createOneTimePaymentCheckoutUrl: ({ userId, successUrl, cancelUrl }: CheckoutUrlParams) =>
-                createOneTimePaymentCheckoutUrl({ userId, productKey: productId, priceKey: priceId, successUrl, cancelUrl })
+              createOneTimePaymentCheckoutUrl: ({ userId, successUrl, cancelUrl, allowPromotionCodes }: ExtendedCheckoutUrlParams) =>
+                createOneTimePaymentCheckoutUrl({ userId, productKey: productId, priceKey: priceId, successUrl, cancelUrl, allowPromotionCodes })
             } as EnhancedSRMPrice<typeof price, typeof priceId, typeof productId>;
           }
         }

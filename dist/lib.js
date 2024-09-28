@@ -17,13 +17,13 @@ const createSRM = (config, dependencies) => {
                     if (price.type === 'recurring') {
                         enhancedPrices[priceId] = {
                             ...price,
-                            createSubscriptionCheckoutUrl: ({ userId, successUrl, cancelUrl }) => createSubscriptionCheckoutUrl({ userId, productKey: productId, priceKey: priceId, successUrl, cancelUrl })
+                            createSubscriptionCheckoutUrl: ({ userId, successUrl, cancelUrl, allowPromotionCodes, trialPeriodDays }) => createSubscriptionCheckoutUrl({ userId, productKey: productId, priceKey: priceId, successUrl, cancelUrl, allowPromotionCodes, trialPeriodDays })
                         };
                     }
                     else if (price.type === 'one_time') {
                         enhancedPrices[priceId] = {
                             ...price,
-                            createOneTimePaymentCheckoutUrl: ({ userId, successUrl, cancelUrl }) => createOneTimePaymentCheckoutUrl({ userId, productKey: productId, priceKey: priceId, successUrl, cancelUrl })
+                            createOneTimePaymentCheckoutUrl: ({ userId, successUrl, cancelUrl, allowPromotionCodes }) => createOneTimePaymentCheckoutUrl({ userId, productKey: productId, priceKey: priceId, successUrl, cancelUrl, allowPromotionCodes })
                         };
                     }
                 }
