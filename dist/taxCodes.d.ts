@@ -1,0 +1,21 @@
+export declare const taxCodes: {
+    readonly GENERAL: "txcd_10000000";
+    readonly DEFAULT: "txcd_10000000";
+    readonly SOFTWARE_AS_A_SERVICE: "txcd_10103000";
+    readonly SOFTWARE_AS_A_SERVICE_BUSINESS: "txcd_10103001";
+    readonly INFRASTRUCTURE_AS_A_SERVICE_BUSINESS: "txcd_10101000";
+    readonly INFRASTRUCTURE_AS_A_SERVICE_PERSONAL: "txcd_10010001";
+    readonly PLATFORM_AS_A_SERVICE_BUSINESS: "txcd_10102000";
+    readonly PLATFORM_AS_A_SERVICE_PERSONAL: "txcd_10102001";
+    readonly CLOUD_BUSINESS_PROCESS_SERVICE: "txcd_10104001";
+    readonly DOWNLOADABLE_SOFTWARE_BUSINESS: "txcd_10202003";
+    readonly DOWNLOADABLE_SOFTWARE_PERSONAL: "txcd_10202000";
+    readonly CUSTOM_SOFTWARE_BUSINESS: "txcd_10203001";
+    readonly CUSTOM_SOFTWARE_PERSONAL: "txcd_10203000";
+    readonly ELECTRONIC_DATA_PROCESSING: "txcd_20060009";
+    readonly TECHNICAL_SUPPORT_SERVICES: "txcd_20060017";
+    readonly TRAINING_SERVICES_LIVE_VIRTUAL: "txcd_20060045";
+    readonly WEBSITE_HOSTING: "txcd_10701100";
+    readonly WEBSITE_DESIGN: "txcd_10701200";
+};
+export type TaxCode = typeof taxCodes[keyof typeof taxCodes];
