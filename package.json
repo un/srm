@@ -1,5 +1,5 @@
 {
-  "name": "srm",
+  "name": "@u22n/srm",
   "version": "1.0.0",
   "description": "Stripe Resource Manager CLI Tool",
   "main": "dist/index.js",
@@ -9,14 +9,11 @@
   },
   "scripts": {
     "build": "tsc",
-    "prepublishOnly": "npm run build",
-    "srm": "ts-node src/cli.ts"
+    "prepublishOnly": "npm run build"
   },
   "dependencies": {
     "dotenv": "^16.4.5",
-    "stripe": "^16.12.0",
-    "ts-node": "^10.9.2",
-    "tsx": "^4.18.0"
+    "stripe": "^16.12.0"
   },
   "devDependencies": {
     "@types/node": "^20.16.5",
@@ -24,5 +21,9 @@
   },
   "keywords": ["stripe", "subscription", "management"],
   "author": "",
-  "license": "ISC"
+  "license": "ISC",
+  "files": [
+    "dist",
+    "README.md"
+  ]
 }
