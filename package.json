@@ -7,7 +7,6 @@
   "bin": {
     "srm": "dist/cli.js"
   },
-
   "scripts": {
     "build": "tsc",
     "prepublishOnly": "pnpm run build"
@@ -18,9 +17,14 @@
   },
   "devDependencies": {
     "@types/node": "^20.16.5",
-    "typescript": "^5.6.2"
+    "typescript": "^5.6.2",
+    "ts-node": "^10.9.2"
   },
-  "keywords": ["stripe", "subscription", "management"],
+  "keywords": [
+    "stripe",
+    "subscription",
+    "management"
+  ],
   "author": "",
   "license": "ISC",
   "files": [
