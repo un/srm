@@ -43,11 +43,11 @@ export const createSRM = <T extends PreSRMConfig>(
         ...price,
         ...(price.type === 'recurring'
           ? {
-              createSubscriptionCheckoutUrl: (params: ExtendedCheckoutUrlParams) =>
+              createSubscriptionCheckoutUrl: (params: CheckoutUrlParams & { trialPeriodDays?: number }) =>
                 createSubscriptionCheckoutUrl({ ...params, productKey: productId, priceKey: priceId })
             }
           : {
-              createOneTimePaymentCheckoutUrl: (params: ExtendedCheckoutUrlParams) =>
+              createOneTimePaymentCheckoutUrl: (params: CheckoutUrlParams) =>
                 createOneTimePaymentCheckoutUrl({ ...params, productKey: productId, priceKey: priceId })
             })
       };
