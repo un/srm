@@ -4,9 +4,7 @@ import {
   SRMProduct, 
   SRMPrice, 
   PreSRMConfig, 
-  CheckoutUrlParams, 
-  OneTimeSRMPrice,
-  RecurringSRMPrice
+  CheckoutUrlParams
 } from './types';
 
 // Extended CheckoutUrlParams to include new options
@@ -15,34 +13,24 @@ interface ExtendedCheckoutUrlParams extends CheckoutUrlParams {
   trialPeriodDays?: number;
 }
 
-// Define the structure for the enhanced SRM configuration
-export type EnhancedSRMConfig<T extends PreSRMConfig> = {
-  [P in keyof T]: P extends 'products'
-    ? {
-        [K in keyof T['products'] & string]: EnhancedSRMProduct<T['products'][K], K>;
-      }
-    : T[P];
+// Simplified EnhancedSRMConfig type
+export type EnhancedSRMConfig<T extends PreSRMConfig> = T & {
+  products: {
+    [K in keyof T['products']]: EnhancedSRMProduct<T['products'][K]>;
+  };
 };
 
-// Enhanced Product with methods added to prices
-export type EnhancedSRMProduct<TProduct extends SRMProduct, ProductId extends string> = 
-  TProduct & {
-    prices: {
-      [K in keyof TProduct['prices'] & string]: EnhancedSRMPrice<TProduct['prices'][K], K, ProductId>;
-    };
+// Simplified EnhancedSRMProduct type
+type EnhancedSRMProduct<T extends SRMProduct> = T & {
+  prices: {
+    [K in keyof T['prices']]: T['prices'][K] & EnhancedSRMPrice<T['prices'][K]>;
   };
+};
 
-// Enhanced Price with appropriate methods based on type
-export type EnhancedSRMPrice<TPrice extends SRMPrice, PriceId extends string, ProductId extends string> = 
-  TPrice['type'] extends 'recurring' 
-    ? RecurringSRMPrice & {
-        createSubscriptionCheckoutUrl: (params: ExtendedCheckoutUrlParams) => Promise<string>;
-      }
-    : TPrice['type'] extends 'one_time'
-    ? OneTimeSRMPrice & {
-        createOneTimePaymentCheckoutUrl: (params: ExtendedCheckoutUrlParams) => Promise<string>;
-      }
-    : never;
+// Simplified EnhancedSRMPrice type
+type EnhancedSRMPrice<T extends SRMPrice> = T['type'] extends 'recurring'
+  ? T & { createSubscriptionCheckoutUrl: (params: ExtendedCheckoutUrlParams) => Promise<string> }
+  : T & { createOneTimePaymentCheckoutUrl: (params: ExtendedCheckoutUrlParams) => Promise<string> };
 
 export const createSRM = <T extends PreSRMConfig>(
   config: T,
@@ -51,38 +39,26 @@ export const createSRM = <T extends PreSRMConfig>(
   const { stripe } = dependencies;
   const createSubscriptionCheckoutUrl = makeCreateSubscriptionCheckoutUrl(stripe);
   const createOneTimePaymentCheckoutUrl = makeCreateOneTimePaymentCheckoutUrl(stripe);
-  const enhancedProducts: Record<string, EnhancedSRMProduct<any, any>> = {};
 
-  for (const productId in config.products) {
-    if (config.products.hasOwnProperty(productId)) {
-      const product = config.products[productId];
-      const enhancedPrices: Record<string, EnhancedSRMPrice<any, any, any>> = {};
-
-      for (const priceId in product.prices) {
-        if (product.prices.hasOwnProperty(priceId)) {
-          const price = product.prices[priceId];
-          if (price.type === 'recurring') {
-            enhancedPrices[priceId] = {
-              ...price,
-              createSubscriptionCheckoutUrl: ({ userId, successUrl, cancelUrl, allowPromotionCodes, trialPeriodDays }: ExtendedCheckoutUrlParams) =>
-                createSubscriptionCheckoutUrl({ userId, productKey: productId, priceKey: priceId, successUrl, cancelUrl, allowPromotionCodes, trialPeriodDays })
-            } as EnhancedSRMPrice<typeof price, typeof priceId, typeof productId>;
-          } else if (price.type === 'one_time') {
-            enhancedPrices[priceId] = {
-              ...price,
-              createOneTimePaymentCheckoutUrl: ({ userId, successUrl, cancelUrl, allowPromotionCodes }: ExtendedCheckoutUrlParams) =>
-                createOneTimePaymentCheckoutUrl({ userId, productKey: productId, priceKey: priceId, successUrl, cancelUrl, allowPromotionCodes })
-            } as EnhancedSRMPrice<typeof price, typeof priceId, typeof productId>;
-          }
-        }
-      }
-
-      enhancedProducts[productId] = {
-        ...product,
-        prices: enhancedPrices,
+  const enhancedProducts = Object.entries(config.products).reduce((acc, [productId, product]) => {
+    const enhancedPrices = Object.entries(product.prices).reduce((priceAcc, [priceId, price]) => {
+      const enhancedPrice = {
+        ...price,
+        ...(price.type === 'recurring'
+          ? {
+              createSubscriptionCheckoutUrl: (params: ExtendedCheckoutUrlParams) =>
+                createSubscriptionCheckoutUrl({ ...params, productKey: productId, priceKey: priceId })
+            }
+          : {
+              createOneTimePaymentCheckoutUrl: (params: ExtendedCheckoutUrlParams) =>
+                createOneTimePaymentCheckoutUrl({ ...params, productKey: productId, priceKey: priceId })
+            })
       };
-    }
-  }
+      return { ...priceAcc, [priceId]: enhancedPrice };
+    }, {});
+
+    return { ...acc, [productId]: { ...product, prices: enhancedPrices } };
+  }, {});
 
   return {
     ...config,

@@ -1,24 +1,24 @@
 import Stripe from 'stripe';
-import { SRMProduct, SRMPrice, PreSRMConfig, CheckoutUrlParams, OneTimeSRMPrice, RecurringSRMPrice } from './types';
+import { SRMProduct, SRMPrice, PreSRMConfig, CheckoutUrlParams } from './types';
 interface ExtendedCheckoutUrlParams extends CheckoutUrlParams {
     allowPromotionCodes?: boolean;
     trialPeriodDays?: number;
 }
-export type EnhancedSRMConfig<T extends PreSRMConfig> = {
-    [P in keyof T]: P extends 'products' ? {
-        [K in keyof T['products'] & string]: EnhancedSRMProduct<T['products'][K], K>;
-    } : T[P];
-};
-export type EnhancedSRMProduct<TProduct extends SRMProduct, ProductId extends string> = TProduct & {
-    prices: {
-        [K in keyof TProduct['prices'] & string]: EnhancedSRMPrice<TProduct['prices'][K], K, ProductId>;
+export type EnhancedSRMConfig<T extends PreSRMConfig> = T & {
+    products: {
+        [K in keyof T['products']]: EnhancedSRMProduct<T['products'][K]>;
     };
 };
-export type EnhancedSRMPrice<TPrice extends SRMPrice, PriceId extends string, ProductId extends string> = TPrice['type'] extends 'recurring' ? RecurringSRMPrice & {
+type EnhancedSRMProduct<T extends SRMProduct> = T & {
+    prices: {
+        [K in keyof T['prices']]: T['prices'][K] & EnhancedSRMPrice<T['prices'][K]>;
+    };
+};
+type EnhancedSRMPrice<T extends SRMPrice> = T['type'] extends 'recurring' ? T & {
     createSubscriptionCheckoutUrl: (params: ExtendedCheckoutUrlParams) => Promise<string>;
-} : TPrice['type'] extends 'one_time' ? OneTimeSRMPrice & {
+} : T & {
     createOneTimePaymentCheckoutUrl: (params: ExtendedCheckoutUrlParams) => Promise<string>;
-} : never;
+};
 export declare const createSRM: <T extends PreSRMConfig>(config: T, dependencies: {
     stripe: Stripe;
 }) => EnhancedSRMConfig<T>;
