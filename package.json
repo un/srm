@@ -1,34 +1,33 @@
 {
   "name": "@u22n/srm",
-  "version": "0.1.2",
-  "description": "Stripe Resource  Manager",
+  "version": "1.0.0",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "bin": {
     "srm": "dist/cli.js"
   },
+  "files": [
+    "dist"
+  ],
   "scripts": {
-    "build": "tsc",
-    "prepublishOnly": "pnpm run build"
+    "build": "tsc -p tsconfig.json && tsc -p tsconfig.cli.json",
+    "prepublishOnly": "npm run build"
   },
   "dependencies": {
-    "dotenv": "^16.4.5",
-    "stripe": "^16.12.0"
+    "stripe": "^12.0.0",
+    "dotenv": "^16.0.0"
   },
   "devDependencies": {
-    "@types/node": "^20.16.5",
-    "typescript": "^5.6.2",
-    "ts-node": "^10.9.2"
+    "@types/node": "^18.0.0",
+    "typescript": "^4.9.0",
+    "ts-node": "^10.9.0"
   },
-  "keywords": [
-    "stripe",
-    "subscription",
-    "management"
-  ],
-  "author": "",
-  "license": "ISC",
-  "files": [
-    "dist",
-    "README.md"
-  ]
+  "peerDependencies": {
+    "ts-node": "^10.9.0"
+  },
+  "peerDependenciesMeta": {
+    "ts-node": {
+      "optional": true
+    }
+  }
 }

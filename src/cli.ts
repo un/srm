@@ -64,6 +64,13 @@ async function main() {
   try {
     switch (command) {
       case 'deploy':
+        // Dynamically import ts-node only when needed
+        const tsNode = await import('ts-node');
+        tsNode.register({
+          compilerOptions: {
+            module: 'commonjs',
+          },
+        });
         await deploy(
           options.config && validateConfigPath(options.config),
           options.env
