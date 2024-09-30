@@ -69,16 +69,9 @@ async function deploy(configPath = "srm.config.ts", envFilePath = ".env") {
     const priceIdMapping = {};
     // Sync products and prices, collecting IDs into priceIdMapping
     await syncProductsAndPrices(stripe, config, priceIdMapping);
-    // Generate price-id-mapping.json file
-    generatePriceIdMapping(priceIdMapping);
     console.log("Configuration deployed successfully.");
 }
 // Add this new function at the end of the file
-function generatePriceIdMapping(priceIdMapping) {
-    const mappingPath = path_1.default.join(process.cwd(), "price-id-mapping.json");
-    fs_1.default.writeFileSync(mappingPath, JSON.stringify(priceIdMapping, null, 2));
-    console.log("Price ID mapping saved to:", mappingPath);
-}
 async function syncProductsAndPrices(stripe, config, priceIdMapping) {
     console.log("Synchronizing products and prices...");
     const { products } = config;
