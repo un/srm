@@ -1,4 +1,3 @@
-import fs from "fs";
 import Stripe from "stripe";
 
 interface BaseCheckoutParams {
@@ -17,6 +16,41 @@ interface SubscriptionCheckoutParams extends BaseCheckoutParams {
 
 interface OneTimePaymentCheckoutParams extends BaseCheckoutParams {}
 
+const idCache: {
+  products?: Stripe.Product[],
+  prices: { [productId: string]: Stripe.Price[] }
+} = { prices: {} };
+
+async function getPriceId(stripe: Stripe, productKey: string, priceKey: string): Promise<string> {
+  // Fetch and cache products
+  if (!idCache.products) {
+    const products = await stripe.products.list({ limit: 100 });
+    idCache.products = products.data;
+  }
+
+  const product = idCache.products.find(
+    (p) => p.metadata.srm_product_key === productKey
+  );
+  if (!product) {
+    throw new Error(`Product not found for key "${productKey}"`);
+  }
+
+  // Fetch and cache prices for the product
+  if (!idCache.prices[product.id]) {
+    const prices = await stripe.prices.list({ product: product.id, limit: 100 });
+    idCache.prices[product.id] = prices.data;
+  }
+
+  const price = idCache.prices[product.id].find(
+    (p) => p.metadata.srm_price_key === priceKey
+  );
+  if (!price) {
+    throw new Error(`Price not found for key "${priceKey}" under product "${productKey}"`);
+  }
+
+  return price.id;
+}
+
 export function makeCreateSubscriptionCheckoutUrl(stripe: Stripe) {
   return async function createSubscriptionCheckoutUrl(
     params: SubscriptionCheckoutParams
@@ -32,7 +66,7 @@ export function makeCreateSubscriptionCheckoutUrl(stripe: Stripe) {
       trialPeriodDays,
     } = params;
 
-    const priceId = getPriceId(productKey, priceKey);
+    const priceId = await getPriceId(stripe, productKey, priceKey);
 
     try {
       const session = await stripe.checkout.sessions.create({
@@ -79,7 +113,7 @@ export function makeCreateOneTimePaymentCheckoutUrl(stripe: Stripe) {
       allowPromotionCodes = false,
     } = params;
 
-    const priceId = getPriceId(productKey, priceKey);
+    const priceId = await getPriceId(stripe, productKey, priceKey);
 
     try {
       const session = await stripe.checkout.sessions.create({
@@ -111,22 +145,4 @@ export function makeCreateOneTimePaymentCheckoutUrl(stripe: Stripe) {
   };
 }
 
-function getPriceId(productKey: string, priceKey: string): string {
-  let priceIdMapping: Record<string, any>;
-  try {
-    const mappingData = fs.readFileSync("price-id-mapping.json", "utf-8");
-    priceIdMapping = JSON.parse(mappingData);
-  } catch (error) {
-    console.error("Error reading price-id-mapping.json:", error);
-    throw new Error("Failed to load price ID mapping.");
-  }
-
-  const priceId = priceIdMapping[productKey]?.prices[priceKey];
-  if (!priceId) {
-    throw new Error(
-      `Price ID not found for product "${productKey}" and price "${priceKey}"`
-    );
-  }
-
-  return priceId;
-}
+// Remove the old getPriceId function that used the JSON file

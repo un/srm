@@ -59,19 +59,10 @@ export async function deploy(
   // Sync products and prices, collecting IDs into priceIdMapping
   await syncProductsAndPrices(stripe, config, priceIdMapping);
 
-  // Generate price-id-mapping.json file
-  generatePriceIdMapping(priceIdMapping);
-
   console.log("Configuration deployed successfully.");
 }
 
 // Add this new function at the end of the file
-function generatePriceIdMapping(priceIdMapping: Record<string, any>): void {
-  const mappingPath = path.join(process.cwd(), "price-id-mapping.json");
-  fs.writeFileSync(mappingPath, JSON.stringify(priceIdMapping, null, 2));
-  console.log("Price ID mapping saved to:", mappingPath);
-}
-
 async function syncProductsAndPrices(
   stripe: Stripe,
   config: PreSRMConfig,
