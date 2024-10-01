@@ -2,7 +2,7 @@ import dotenv from 'dotenv';
 import fs from 'fs';
 import Stripe from 'stripe';
 import { SRMPrice, PreSRMConfig } from './types';
-import { TaxCode } from './taxCodes';
+import { TaxCode } from './tax-codes';
 
 export async function pull(
   configPath: string = 'srm.config.ts',

@@ -4,7 +4,7 @@ import Stripe from "stripe";
 import dotenv from "dotenv";
 import * as tsNode from 'ts-node';
 import { PreSRMConfig, SRMPrice } from "./types";
-import { taxCodes } from './taxCodes';
+import { taxCodes } from './tax-codes';
 
 // Load environment variables from .env file
 
@@ -58,6 +58,11 @@ export async function deploy(
 
   // Sync products and prices, collecting IDs into priceIdMapping
   await syncProductsAndPrices(stripe, config, priceIdMapping);
+
+  // Deploy webhooks
+  if (config.webhooks) {
+    await deployWebhooks(stripe, config.webhooks);
+  }
 
   console.log("Configuration deployed successfully.");
 }
@@ -188,4 +193,30 @@ async function syncPrices(
     priceIdMapping[productKey].prices[priceKey] = price.id;
   }
   console.log(`All prices synchronized for product: ${product.name}`);
+}
+
+async function deployWebhooks(stripe: Stripe, webhooksConfig: PreSRMConfig['webhooks']) {
+  if (!webhooksConfig) {
+    console.warn("No webhooks configured in the config file.");
+    return;
+  }
+
+  console.log("Deploying webhooks...");
+  
+  const existingWebhooks = await stripe.webhookEndpoints.list({ limit: 100 });
+  const existingEndpoint = existingWebhooks.data.find(wh => wh.url === webhooksConfig.endpoint);
+
+  if (!existingEndpoint) {
+    await stripe.webhookEndpoints.create({
+      url: webhooksConfig.endpoint,
+      enabled_events: webhooksConfig.events,
+      api_version: '2024-06-20',
+    });
+    console.log(`Created new webhook endpoint: ${webhooksConfig.endpoint}`);
+  } else {
+    await stripe.webhookEndpoints.update(existingEndpoint.id, {
+      enabled_events: webhooksConfig.events,
+    });
+    console.log(`Updated existing webhook endpoint: ${webhooksConfig.endpoint}`);
+  }
 }

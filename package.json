@@ -11,7 +11,8 @@
   ],
   "scripts": {
     "build": "tsc -p tsconfig.json && tsc -p tsconfig.cli.json",
-    "prepublishOnly": "npm run build"
+    "prepublishOnly": "npm run build",
+    "test": "srm deploy --config examples/srm.config.ts"
   },
   "dependencies": {
     "stripe": "^12.0.0",
