@@ -18,7 +18,6 @@ const srm = createSRM<Config>(config, {
     userId: "testId",
     successUrl: "http://localhost:3000/success",
     cancelUrl: "http://localhost:3000/cancel",
-    trialPeriodDays: 3
   });
   const oneTimeUrl = await srm.products.hobby.prices.lifetime.createOneTimePaymentCheckoutUrl({
     userId: "testId",

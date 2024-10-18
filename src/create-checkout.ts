@@ -36,12 +36,12 @@ async function getPriceId(stripe: Stripe, productKey: string, priceKey: string):
   }
 
   // Fetch and cache prices for the product
-  if (!idCache.prices[product.id]) {
+  if (!idCache.prices[productKey]) {
     const prices = await stripe.prices.list({ product: product.id, limit: 100 });
-    idCache.prices[product.id] = prices.data;
+    idCache.prices[productKey] = prices.data;
   }
 
-  const price = idCache.prices[product.id].find(
+  const price = idCache.prices[productKey].find(
     (p) => p.metadata.srm_price_key === priceKey
   );
   if (!price) {
@@ -102,7 +102,6 @@ export function makeCreateSubscriptionCheckoutUrl(stripe: Stripe) {
     }
   };
 }
-
 export function makeCreateOneTimePaymentCheckoutUrl(stripe: Stripe) {
   return async function createOneTimePaymentCheckoutUrl(
     params: OneTimePaymentCheckoutParams

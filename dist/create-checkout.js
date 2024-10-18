@@ -14,11 +14,11 @@ async function getPriceId(stripe, productKey, priceKey) {
         throw new Error(`Product not found for key "${productKey}"`);
     }
     // Fetch and cache prices for the product
-    if (!idCache.prices[product.id]) {
+    if (!idCache.prices[productKey]) {
         const prices = await stripe.prices.list({ product: product.id, limit: 100 });
-        idCache.prices[product.id] = prices.data;
+        idCache.prices[productKey] = prices.data;
     }
-    const price = idCache.prices[product.id].find((p) => p.metadata.srm_price_key === priceKey);
+    const price = idCache.prices[productKey].find((p) => p.metadata.srm_price_key === priceKey);
     if (!price) {
         throw new Error(`Price not found for key "${priceKey}" under product "${productKey}"`);
     }
