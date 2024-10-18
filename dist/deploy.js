@@ -143,6 +143,7 @@ async function syncPrices(stripe, product, pricesConfig, priceIdMapping, product
                 currency: "usd", // Adjust the currency as needed
                 metadata: {
                     srm_price_key: priceKey,
+                    ...(priceConfig.trialPeriodDays && { trial_period_days: priceConfig.trialPeriodDays.toString() }),
                 },
                 tax_behavior: 'exclusive',
             };
@@ -152,7 +153,7 @@ async function syncPrices(stripe, product, pricesConfig, priceIdMapping, product
                 };
             }
             price = await stripe.prices.create(priceParams);
-            console.log(`Created price for product ${product.name}: $${priceConfig.amount / 100}/${priceConfig.type === "recurring" ? priceConfig.interval : "one-time"}`);
+            console.log(`Created price for product ${product.name}: $${priceConfig.amount / 100}/${priceConfig.type === "recurring" ? priceConfig.interval : "one-time"}${priceConfig.trialPeriodDays ? ` with ${priceConfig.trialPeriodDays}-day trial` : ''}`);
         }
         else {
             console.log(`Price for product ${product.name} already exists: $${priceConfig.amount / 100}/${priceConfig.type === "recurring" ? priceConfig.interval : "one-time"}`);

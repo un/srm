@@ -26,15 +26,19 @@ async function getPriceId(stripe, productKey, priceKey) {
 }
 function makeCreateSubscriptionCheckoutUrl(stripe) {
     return async function createSubscriptionCheckoutUrl(params) {
-        const { userId, productKey, priceKey, quantity, successUrl, cancelUrl, allowPromotionCodes = false, trialPeriodDays, } = params;
+        const { userId, productKey, priceKey, quantity, successUrl, cancelUrl, allowPromotionCodes = false, } = params;
         const priceId = await getPriceId(stripe, productKey, priceKey);
+        const price = idCache.prices[productKey].find(p => p.id === priceId);
+        if (!price) {
+            throw new Error(`Price not found for key "${priceKey}" under product "${productKey}"`);
+        }
         try {
             const session = await stripe.checkout.sessions.create({
                 mode: "subscription",
                 payment_method_types: ["card"],
                 metadata: { userId },
                 subscription_data: {
-                    ...(trialPeriodDays && { trial_period_days: trialPeriodDays }),
+                    ...(price.metadata.trial_period_days && { trial_period_days: parseInt(price.metadata.trial_period_days, 10) }),
                     metadata: {
                         userId,
                     },
