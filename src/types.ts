@@ -49,7 +49,7 @@ export interface SRMPriceBase {
   readonly amount: number;
   readonly interval: "day" | "week" | "month" | "year" | "one_time";
   readonly type: "recurring" | "one_time";
-  readonly trialPeriodDays?: number; // Add this line
+  readonly trialPeriodDays?: number;
 }
 
 export interface RecurringSRMPrice extends SRMPriceBase {
@@ -59,6 +59,7 @@ export interface RecurringSRMPrice extends SRMPriceBase {
 export interface OneTimeSRMPrice extends SRMPriceBase {
   readonly type: "one_time";
 }
+
 
 export type SRMPrice = RecurringSRMPrice | OneTimeSRMPrice;
 
