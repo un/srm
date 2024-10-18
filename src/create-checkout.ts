@@ -1,13 +1,13 @@
 import Stripe from "stripe";
+import { CheckoutUrlParams } from './types';
 
-interface BaseCheckoutParams {
-  userId: string;
+interface ExtendedCheckoutUrlParams extends CheckoutUrlParams {
+  quantity?: number;
+}
+
+interface BaseCheckoutParams extends ExtendedCheckoutUrlParams {
   productKey: string;
   priceKey: string;
-  quantity?: number;
-  successUrl: string;
-  cancelUrl: string;
-  allowPromotionCodes?: boolean;
 }
 
 interface SubscriptionCheckoutParams extends BaseCheckoutParams {
@@ -63,6 +63,7 @@ export function makeCreateSubscriptionCheckoutUrl(stripe: Stripe) {
       successUrl,
       cancelUrl,
       allowPromotionCodes = false,
+      trialPeriodDays,
     } = params;
 
     const priceId = await getPriceId(stripe, productKey, priceKey);
@@ -78,7 +79,7 @@ export function makeCreateSubscriptionCheckoutUrl(stripe: Stripe) {
         payment_method_types: ["card"],
         metadata: { userId },
         subscription_data: {
-          ...(price.metadata.trial_period_days && { trial_period_days: parseInt(price.metadata.trial_period_days, 10) }),
+          ...(trialPeriodDays && { trial_period_days: trialPeriodDays }),
           metadata: {
             userId,
           },
@@ -102,6 +103,7 @@ export function makeCreateSubscriptionCheckoutUrl(stripe: Stripe) {
     }
   };
 }
+
 export function makeCreateOneTimePaymentCheckoutUrl(stripe: Stripe) {
   return async function createOneTimePaymentCheckoutUrl(
     params: OneTimePaymentCheckoutParams

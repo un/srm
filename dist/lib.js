@@ -6,22 +6,36 @@ const createSRM = (config, dependencies) => {
     const { stripe } = dependencies;
     const createSubscriptionCheckoutUrl = (0, create_checkout_1.makeCreateSubscriptionCheckoutUrl)(stripe);
     const createOneTimePaymentCheckoutUrl = (0, create_checkout_1.makeCreateOneTimePaymentCheckoutUrl)(stripe);
-    const enhancedProducts = Object.entries(config.products).reduce((acc, [productId, product]) => {
-        const enhancedPrices = Object.entries(product.prices).reduce((priceAcc, [priceId, price]) => {
-            const enhancedPrice = {
+    const enhancePrice = (productId, priceId, price) => {
+        if (price.type === 'recurring') {
+            return {
                 ...price,
-                ...(price.type === 'recurring'
-                    ? {
-                        createSubscriptionCheckoutUrl: (params) => createSubscriptionCheckoutUrl({ ...params, productKey: productId, priceKey: priceId })
-                    }
-                    : {
-                        createOneTimePaymentCheckoutUrl: (params) => createOneTimePaymentCheckoutUrl({ ...params, productKey: productId, priceKey: priceId })
-                    })
+                createSubscriptionCheckoutUrl: (params) => createSubscriptionCheckoutUrl({
+                    ...params,
+                    productKey: productId,
+                    priceKey: priceId,
+                    trialPeriodDays: price.trialPeriodDays,
+                }),
             };
-            return { ...priceAcc, [priceId]: enhancedPrice };
-        }, {});
-        return { ...acc, [productId]: { ...product, prices: enhancedPrices } };
-    }, {});
+        }
+        else {
+            return {
+                ...price,
+                createOneTimePaymentCheckoutUrl: (params) => createOneTimePaymentCheckoutUrl({ ...params, productKey: productId, priceKey: priceId }),
+            };
+        }
+    };
+    const enhanceProduct = (productId, product) => {
+        const enhancedPrices = Object.fromEntries(Object.entries(product.prices).map(([priceId, price]) => [
+            priceId,
+            enhancePrice(productId, priceId, price),
+        ]));
+        return { ...product, prices: enhancedPrices };
+    };
+    const enhancedProducts = Object.fromEntries(Object.entries(config.products).map(([productId, product]) => [
+        productId,
+        enhanceProduct(productId, product),
+    ]));
     return {
         ...config,
         products: enhancedProducts,

@@ -26,7 +26,7 @@ async function getPriceId(stripe, productKey, priceKey) {
 }
 function makeCreateSubscriptionCheckoutUrl(stripe) {
     return async function createSubscriptionCheckoutUrl(params) {
-        const { userId, productKey, priceKey, quantity, successUrl, cancelUrl, allowPromotionCodes = false, } = params;
+        const { userId, productKey, priceKey, quantity, successUrl, cancelUrl, allowPromotionCodes = false, trialPeriodDays, } = params;
         const priceId = await getPriceId(stripe, productKey, priceKey);
         const price = idCache.prices[productKey].find(p => p.id === priceId);
         if (!price) {
@@ -38,7 +38,7 @@ function makeCreateSubscriptionCheckoutUrl(stripe) {
                 payment_method_types: ["card"],
                 metadata: { userId },
                 subscription_data: {
-                    ...(price.metadata.trial_period_days && { trial_period_days: parseInt(price.metadata.trial_period_days, 10) }),
+                    ...(trialPeriodDays && { trial_period_days: trialPeriodDays }),
                     metadata: {
                         userId,
                     },

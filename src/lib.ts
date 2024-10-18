@@ -8,7 +8,9 @@ import {
 } from './types';
 
 // Extended CheckoutUrlParams to include new options
-
+interface ExtendedCheckoutUrlParams extends CheckoutUrlParams {
+  quantity?: number;
+}
 
 // Simplified EnhancedSRMConfig type
 export type EnhancedSRMConfig<T extends PreSRMConfig> = T & {
@@ -26,8 +28,8 @@ type EnhancedSRMProduct<T extends SRMProduct> = T & {
 
 // Simplified EnhancedSRMPrice type
 type EnhancedSRMPrice<T extends SRMPrice> = T['type'] extends 'recurring'
-  ? T & { createSubscriptionCheckoutUrl: (params: CheckoutUrlParams & { trialPeriodDays?: number }) => Promise<string> }
-  : T & { createOneTimePaymentCheckoutUrl: (params: CheckoutUrlParams) => Promise<string> };
+  ? T & { createSubscriptionCheckoutUrl: (params: ExtendedCheckoutUrlParams & { trialPeriodDays?: number }) => Promise<string> }
+  : T & { createOneTimePaymentCheckoutUrl: (params: ExtendedCheckoutUrlParams) => Promise<string> };
 
 export const createSRM = <T extends PreSRMConfig>(
   config: T,
@@ -37,25 +39,44 @@ export const createSRM = <T extends PreSRMConfig>(
   const createSubscriptionCheckoutUrl = makeCreateSubscriptionCheckoutUrl(stripe);
   const createOneTimePaymentCheckoutUrl = makeCreateOneTimePaymentCheckoutUrl(stripe);
 
-  const enhancedProducts = Object.entries(config.products).reduce((acc, [productId, product]) => {
-    const enhancedPrices = Object.entries(product.prices).reduce((priceAcc, [priceId, price]) => {
-      const enhancedPrice = {
+  const enhancePrice = (productId: string, priceId: string, price: SRMPrice) => {
+    if (price.type === 'recurring') {
+      return {
         ...price,
-        ...(price.type === 'recurring'
-          ? {
-              createSubscriptionCheckoutUrl: (params: CheckoutUrlParams & { trialPeriodDays?: number }) =>
-                createSubscriptionCheckoutUrl({ ...params, productKey: productId, priceKey: priceId })
-            }
-          : {
-              createOneTimePaymentCheckoutUrl: (params: CheckoutUrlParams) =>
-                createOneTimePaymentCheckoutUrl({ ...params, productKey: productId, priceKey: priceId })
-            })
+        createSubscriptionCheckoutUrl: (params: CheckoutUrlParams) =>
+          createSubscriptionCheckoutUrl({
+            ...params,
+            productKey: productId,
+            priceKey: priceId,
+            trialPeriodDays: price.trialPeriodDays,
+          }),
       };
-      return { ...priceAcc, [priceId]: enhancedPrice };
-    }, {});
+    } else {
+      return {
+        ...price,
+        createOneTimePaymentCheckoutUrl: (params: CheckoutUrlParams) =>
+          createOneTimePaymentCheckoutUrl({ ...params, productKey: productId, priceKey: priceId }),
+      };
+    }
+  };
 
-    return { ...acc, [productId]: { ...product, prices: enhancedPrices } };
-  }, {});
+  const enhanceProduct = (productId: string, product: SRMProduct) => {
+    const enhancedPrices = Object.fromEntries(
+      Object.entries(product.prices).map(([priceId, price]) => [
+        priceId,
+        enhancePrice(productId, priceId, price),
+      ])
+    );
+
+    return { ...product, prices: enhancedPrices };
+  };
+
+  const enhancedProducts = Object.fromEntries(
+    Object.entries(config.products).map(([productId, product]) => [
+      productId,
+      enhanceProduct(productId, product),
+    ])
+  );
 
   return {
     ...config,

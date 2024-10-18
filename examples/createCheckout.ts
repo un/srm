@@ -25,8 +25,14 @@ const srm = createSRM<Config>(config, {
     cancelUrl: "http://localhost:3000/cancel",
     allowPromotionCodes: true,
   });
-  console.log(url);
-  console.log(oneTimeUrl);
+  const withTrialUrl = await srm.products.enterprise.prices.annual.createSubscriptionCheckoutUrl({
+    userId: "testId",
+    successUrl: "http://localhost:3000/success",
+    cancelUrl: "http://localhost:3000/cancel",
+  });
+  console.log(url, 'createSubscriptionCheckoutUrl');
+  console.log(oneTimeUrl, 'createOneTimePaymentCheckoutUrl');
+  console.log(withTrialUrl, 'createSubscriptionCheckoutUrl with trial period');
 })();
 
 

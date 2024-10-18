@@ -35,7 +35,6 @@ export const config = {
           amount: 20000,
           interval: "year",
           type: "recurring",
-          trialPeriodDays: 14, // Add trial period for annual plan
         },
       },
       features: ["basicAnalytics", "aiReporting"],
@@ -48,6 +47,7 @@ export const config = {
           amount: 20000,
           interval: "year",
           type: "recurring",
+          trialPeriodDays: 3, // Add trial period for enterprise plan
           // tax_code is optional; will default if not specified
         },
       },

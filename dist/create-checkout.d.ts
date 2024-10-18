@@ -1,12 +1,11 @@
 import Stripe from "stripe";
-interface BaseCheckoutParams {
-    userId: string;
+import { CheckoutUrlParams } from './types';
+interface ExtendedCheckoutUrlParams extends CheckoutUrlParams {
+    quantity?: number;
+}
+interface BaseCheckoutParams extends ExtendedCheckoutUrlParams {
     productKey: string;
     priceKey: string;
-    quantity?: number;
-    successUrl: string;
-    cancelUrl: string;
-    allowPromotionCodes?: boolean;
 }
 interface SubscriptionCheckoutParams extends BaseCheckoutParams {
     trialPeriodDays?: number;
