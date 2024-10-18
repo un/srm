@@ -165,6 +165,7 @@ async function syncPrices(
         currency: "usd", // Adjust the currency as needed
         metadata: {
           srm_price_key: priceKey,
+          ...(priceConfig.trialPeriodDays && { trial_period_days: priceConfig.trialPeriodDays.toString() }),
         },
         tax_behavior: 'exclusive',
       };
@@ -179,7 +180,9 @@ async function syncPrices(
       console.log(
         `Created price for product ${product.name}: $${
           priceConfig.amount / 100
-        }/${priceConfig.type === "recurring" ? priceConfig.interval : "one-time"}`
+        }/${priceConfig.type === "recurring" ? priceConfig.interval : "one-time"}${
+          priceConfig.trialPeriodDays ? ` with ${priceConfig.trialPeriodDays}-day trial` : ''
+        }`
       );
     } else {
       console.log(

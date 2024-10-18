@@ -63,10 +63,14 @@ export function makeCreateSubscriptionCheckoutUrl(stripe: Stripe) {
       successUrl,
       cancelUrl,
       allowPromotionCodes = false,
-      trialPeriodDays,
     } = params;
 
     const priceId = await getPriceId(stripe, productKey, priceKey);
+    const price = idCache.prices[productKey].find(p => p.id === priceId);
+
+    if (!price) {
+      throw new Error(`Price not found for key "${priceKey}" under product "${productKey}"`);
+    }
 
     try {
       const session = await stripe.checkout.sessions.create({
@@ -74,7 +78,7 @@ export function makeCreateSubscriptionCheckoutUrl(stripe: Stripe) {
         payment_method_types: ["card"],
         metadata: { userId },
         subscription_data: {
-          ...(trialPeriodDays && { trial_period_days: trialPeriodDays }),
+          ...(price.metadata.trial_period_days && { trial_period_days: parseInt(price.metadata.trial_period_days, 10) }),
           metadata: {
             userId,
           },

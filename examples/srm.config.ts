@@ -16,6 +16,7 @@ export const config = {
           amount: 1000,
           interval: "month",
           type: "recurring",
+          trialPeriodDays: 7, // Add trial period for monthly plan
         },
         lifetime: {
           amount: 20000,
@@ -34,6 +35,7 @@ export const config = {
           amount: 20000,
           interval: "year",
           type: "recurring",
+          trialPeriodDays: 14, // Add trial period for annual plan
         },
       },
       features: ["basicAnalytics", "aiReporting"],
